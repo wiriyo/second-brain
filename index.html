@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 Second Brain ของพี่ทะเล</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🧠</span>
+    <span class="logo-text">Second Brain</span>
+  </div>
+  <div class="sidebar-nav">
+    <a href="index.html" class="nav-item active">🏠 หน้าหลัก</a>
+    <a href="inbox.html" class="nav-item">📥 Inbox <span class="badge" id="inbox-badge">0</span></a>
+    <a href="tasks.html" class="nav-item">✅ Tasks</a>
+    <a href="para.html" class="nav-item">📂 PARA</a>
+    <a href="habit.html" class="nav-item">🎯 Habit Tracker</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main-content">
+
+  <!-- HERO -->
+  <div class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="hero-title">สวัสดีตอนเช้า พี่ทะเล 👋</h1>
+        <p class="hero-sub">สมองมีไว้คิด ไม่ใช่มีไว้จำ — Tiago Forte</p>
+        <div class="hero-date" id="hero-date"></div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-inbox">0</div>
+          <div class="stat-label">รายการ Inbox</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-tasks">0</div>
+          <div class="stat-label">งานค้าง</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-points">0</div>
+          <div class="stat-label">แต้มสะสม</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-streak">0</div>
+          <div class="stat-label">วัน streak 🔥</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY FOCUS -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🎯 โฟกัสวันนี้</h2>
+      <span class="section-sub">3 งานสำคัญที่สุดของวันนี้</span>
+    </div>
+    <div class="focus-grid">
+      <div class="focus-card priority-1">
+        <div class="priority-badge">#1</div>
+        <input class="focus-input" id="focus1" placeholder="งานสำคัญที่สุดวันนี้คืออะไร?" />
+        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
+      </div>
+      <div class="focus-card priority-2">
+        <div class="priority-badge">#2</div>
+        <input class="focus-input" id="focus2" placeholder="งานที่สองคืออะไร?" />
+        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
+      </div>
+      <div class="focus-card priority-3">
+        <div class="priority-badge">#3</div>
+        <input class="focus-input" id="focus3" placeholder="งานที่สามคืออะไร?" />
+        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK CAPTURE -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">📥 Quick Capture</h2>
+      <span class="section-sub">มีไอเดียอะไรมา? จดลงนี้ก่อนเลย</span>
+    </div>
+    <div class="capture-box">
+      <input class="capture-input" id="quick-input" placeholder="จดทุกอย่างที่คิดได้... แล้วกด Enter หรือกดปุ่ม" />
+      <button class="capture-btn" onclick="quickCapture()">+ เพิ่ม Inbox</button>
+    </div>
+    <div class="inbox-preview" id="inbox-preview"></div>
+  </section>
+
+  <!-- NAVIGATION CARDS -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🗂️ ระบบทั้งหมด</h2>
+    </div>
+    <div class="nav-cards">
+      <a href="inbox.html" class="nav-card inbox-card">
+        <div class="nav-card-icon">📥</div>
+        <div class="nav-card-title">Inbox</div>
+        <div class="nav-card-desc">จดก่อน จัดทีหลัง</div>
+        <div class="nav-card-count" id="card-inbox">0 รายการ</div>
+      </a>
+      <a href="tasks.html" class="nav-card tasks-card">
+        <div class="nav-card-icon">✅</div>
+        <div class="nav-card-title">Tasks</div>
+        <div class="nav-card-desc">จัดการงานทั้งหมด</div>
+        <div class="nav-card-count" id="card-tasks">0 งาน</div>
+      </a>
+      <a href="para.html" class="nav-card para-card">
+        <div class="nav-card-icon">📂</div>
+        <div class="nav-card-title">PARA</div>
+        <div class="nav-card-desc">Projects · Areas · Resources · Archive</div>
+        <div class="nav-card-count">4 หมวด</div>
+      </a>
+      <a href="habit.html" class="nav-card habit-card">
+        <div class="nav-card-icon">🎯</div>
+        <div class="nav-card-title">Habit Tracker</div>
+        <div class="nav-card-desc">ติ๊กทุกวัน สะสมแต้ม</div>
+        <div class="nav-card-count" id="card-points">0 แต้ม</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- GOLDEN RULES -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">✨ กฎทองของระบบนี้</h2>
+    </div>
+    <div class="rules-grid">
+      <div class="rule-card">
+        <div class="rule-icon">📥</div>
+        <div class="rule-title">Capture ก่อน จัดทีหลัง</div>
+        <div class="rule-desc">อย่าให้ความยุ่งยากของการจัดหยุดคุณจากการจด</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">🏠</div>
+        <div class="rule-title">ของแต่ละชิ้นมีที่เดียว</div>
+        <div class="rule-desc">ถ้าอยู่ 2 ที่ จะไม่ได้รับการดูแลที่ไหนเลย</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">🎯</div>
+        <div class="rule-title">Project ต้องมี outcome ชัด</div>
+        <div class="rule-desc">Project ที่ไม่มี goal คือแค่ความฝัน</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-icon">🔄</div>
+        <div class="rule-title">Weekly Review คือหัวใจ</div>
+        <div class="rule-desc">ขาด Weekly Review ระบบจะพังในไม่ช้า</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('quick-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') quickCapture();
+  });
+</script>
+</body>
+</html>

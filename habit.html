@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Habit Tracker — Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">🧠</span><span class="logo-text">Second Brain</span></div>
+  <div class="sidebar-nav">
+    <a href="index.html" class="nav-item">🏠 หน้าหลัก</a>
+    <a href="inbox.html" class="nav-item">📥 Inbox <span class="badge" id="inbox-badge">0</span></a>
+    <a href="tasks.html" class="nav-item">✅ Tasks</a>
+    <a href="para.html" class="nav-item">📂 PARA</a>
+    <a href="habit.html" class="nav-item active">🎯 Habit Tracker</a>
+  </div>
+  <div class="sidebar-footer"><div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div></div>
+</nav>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">🎯 Habit Tracker</h1>
+    <p class="page-desc">ติ๊กทุกวันที่ทำได้ สะสมแต้ม แลกรางวัล!</p>
+  </div>
+
+  <!-- POINTS BAR -->
+  <div class="points-hero">
+    <div class="points-left">
+      <div class="points-label">💎 แต้มสะสมทั้งหมด</div>
+      <div class="points-big" id="total-points">0</div>
+      <div class="points-sub">แต้ม</div>
+    </div>
+    <div class="points-right">
+      <div class="streak-box">
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-label">วัน streak 🔥</div>
+      </div>
+      <div class="streak-box">
+        <div class="streak-num" id="today-score">0</div>
+        <div class="streak-label">แต้มวันนี้</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY HABITS -->
+  <div class="card">
+    <h3 class="card-title">📅 Habits วันนี้ — <span id="today-date"></span></h3>
+    <div class="habit-grid" id="habit-grid"></div>
+    <div class="habit-progress">
+      <div class="progress-label">
+        <span>ทำแล้ว <span id="done-count">0</span> / <span id="total-count">0</span> อย่าง</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY VIEW -->
+  <div class="card">
+    <h3 class="card-title">📊 สัปดาห์นี้</h3>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+  <!-- REWARD SHOP -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">🎁 Reward Shop</h3>
+      <span class="card-desc">แต้มปัจจุบัน: <strong id="shop-points">0</strong> แต้ม</span>
+    </div>
+    <div class="reward-grid" id="reward-grid"></div>
+  </div>
+
+  <!-- REDEEM LOG -->
+  <div class="card" id="redeem-log-card" style="display:none">
+    <h3 class="card-title">🎉 รางวัลที่แลกไปแล้ว</h3>
+    <div id="redeem-log"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+<script src="js/habit.js"></script>
+</body>
+</html>

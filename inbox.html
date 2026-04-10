@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📥 Inbox — Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">🧠</span><span class="logo-text">Second Brain</span></div>
+  <div class="sidebar-nav">
+    <a href="index.html" class="nav-item">🏠 หน้าหลัก</a>
+    <a href="inbox.html" class="nav-item active">📥 Inbox <span class="badge" id="inbox-badge">0</span></a>
+    <a href="tasks.html" class="nav-item">✅ Tasks</a>
+    <a href="para.html" class="nav-item">📂 PARA</a>
+    <a href="habit.html" class="nav-item">🎯 Habit Tracker</a>
+  </div>
+  <div class="sidebar-footer"><div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div></div>
+</nav>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">📥 Inbox</h1>
+    <p class="page-desc">ถังพักสมอง — จดทุกอย่างออกมาจากหัวก่อน ไม่ต้องจัด ไม่ต้องสวย</p>
+  </div>
+
+  <div class="info-banner">
+    <span class="info-icon">💡</span>
+    <span>กฎข้อเดียว: จดออกมาก่อน → ค่อยจัดทุกวันอาทิตย์ (Weekly Review)</span>
+  </div>
+
+  <!-- ADD ITEM -->
+  <div class="card">
+    <div class="capture-box">
+      <input class="capture-input" id="inbox-input" placeholder="มีอะไรในหัวตอนนี้? จดลงมาเลยค่ะ..." />
+      <button class="capture-btn" onclick="addInboxItem()">+ เพิ่ม</button>
+    </div>
+  </div>
+
+  <!-- INBOX LIST -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">รายการทั้งหมด (<span id="inbox-count">0</span>)</h3>
+      <button class="btn-outline" onclick="clearDone()">🗑️ ลบที่จัดแล้ว</button>
+    </div>
+    <div id="inbox-list" class="item-list">
+      <div class="empty-state">ยังไม่มีรายการค่ะ จดอะไรสักอย่างดิ! 🌸</div>
+    </div>
+  </div>
+
+  <!-- WEEKLY REVIEW -->
+  <div class="card review-card">
+    <h3 class="card-title">🔄 Weekly Review Checklist</h3>
+    <p class="card-desc">ทำทุกวันอาทิตย์ ใช้เวลา 15-30 นาทีค่ะ</p>
+    <div class="review-list">
+      <label class="review-item"><input type="checkbox"> เปิด Inbox ทั้งหมด</label>
+      <label class="review-item"><input type="checkbox"> ย้ายแต่ละรายการไป Projects / Areas / Resources</label>
+      <label class="review-item"><input type="checkbox"> ลบรายการที่ไม่จำเป็น</label>
+      <label class="review-item"><input type="checkbox"> ล้าง Inbox ให้เหลือ 0 ✅</label>
+      <label class="review-item"><input type="checkbox"> ดู Tasks ที่ค้างอยู่</label>
+      <label class="review-item"><input type="checkbox"> วางแผนสัปดาห์หน้า</label>
+    </div>
+  </div>
+</main>
+
+<!-- MOVE MODAL -->
+<div class="modal" id="move-modal">
+  <div class="modal-box">
+    <h3 class="modal-title">ย้ายไปที่ไหนดีคะ?</h3>
+    <div class="modal-options">
+      <button class="modal-opt" onclick="moveItem('projects')">📁 Projects</button>
+      <button class="modal-opt" onclick="moveItem('areas')">🌀 Areas</button>
+      <button class="modal-opt" onclick="moveItem('resources')">📚 Resources</button>
+      <button class="modal-opt" onclick="moveItem('archive')">📦 Archive</button>
+      <button class="modal-opt done-opt" onclick="moveItem('done')">✅ จัดแล้ว</button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal()">ยกเลิก</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/inbox.js"></script>
+</body>
+</html>

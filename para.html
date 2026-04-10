@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📂 PARA — Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">🧠</span><span class="logo-text">Second Brain</span></div>
+  <div class="sidebar-nav">
+    <a href="index.html" class="nav-item">🏠 หน้าหลัก</a>
+    <a href="inbox.html" class="nav-item">📥 Inbox <span class="badge" id="inbox-badge">0</span></a>
+    <a href="tasks.html" class="nav-item">✅ Tasks</a>
+    <a href="para.html" class="nav-item active">📂 PARA</a>
+    <a href="habit.html" class="nav-item">🎯 Habit Tracker</a>
+  </div>
+  <div class="sidebar-footer"><div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div></div>
+</nav>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">📂 PARA Method</h1>
+    <p class="page-desc">จัดระเบียบทุกอย่างด้วย Projects · Areas · Resources · Archive</p>
+  </div>
+
+  <div class="para-grid">
+
+    <!-- PROJECTS -->
+    <div class="para-card projects-card">
+      <div class="para-card-header">
+        <div class="para-icon">📁</div>
+        <div>
+          <div class="para-title">Projects</div>
+          <div class="para-subtitle">งานที่มี deadline ชัดเจน</div>
+        </div>
+        <button class="para-add-btn" onclick="addParaItem('projects')">+</button>
+      </div>
+      <div class="para-desc-box">มีวันเริ่ม มีวันจบ — ถ้าไม่มี deadline ไม่ใช่ Project</div>
+      <div class="para-list" id="list-projects">
+        <div class="para-item">
+          <span class="para-item-dot"></span>
+          <span class="para-item-text">คอร์ส Vibe Coding</span>
+          <span class="para-item-date">เสร็จ: เดือนนี้</span>
+        </div>
+        <div class="para-item">
+          <span class="para-item-dot"></span>
+          <span class="para-item-text">เตรียมสไลด์ Day 1-5</span>
+        </div>
+      </div>
+      <input class="para-input" id="input-projects" placeholder="เพิ่ม Project..." onkeypress="if(event.key==='Enter')addParaItem('projects')" style="display:none"/>
+    </div>
+
+    <!-- AREAS -->
+    <div class="para-card areas-card">
+      <div class="para-card-header">
+        <div class="para-icon">🌀</div>
+        <div>
+          <div class="para-title">Areas</div>
+          <div class="para-subtitle">หน้าที่ที่ดูแลต่อเนื่อง</div>
+        </div>
+        <button class="para-add-btn" onclick="addParaItem('areas')">+</button>
+      </div>
+      <div class="para-desc-box">ไม่มีวันจบ แต่ต้องรักษามาตรฐานให้อยู่เสมอ</div>
+      <div class="para-list" id="list-areas">
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">การสอน & ออกแบบหลักสูตร</span></div>
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">IoT / ESP32 Development</span></div>
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Board Games Collection</span></div>
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">สุขภาพ & ออกกำลังกาย</span></div>
+      </div>
+      <input class="para-input" id="input-areas" placeholder="เพิ่ม Area..." onkeypress="if(event.key==='Enter')addParaItem('areas')" style="display:none"/>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="para-card resources-card">
+      <div class="para-card-header">
+        <div class="para-icon">📚</div>
+        <div>
+          <div class="para-title">Resources</div>
+          <div class="para-subtitle">ห้องสมุดส่วนตัว</div>
+        </div>
+        <button class="para-add-btn" onclick="addParaItem('resources')">+</button>
+      </div>
+      <div class="para-desc-box">ข้อมูลที่สนใจ เก็บไว้ใช้ภายหลัง ค้นเจอทันที</div>
+      <div class="para-list" id="list-resources">
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">ESP32-WROOM-32 Docs</span></div>
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Arduino Libraries ที่ดี</span></div>
+        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Zombicide Game Tips</span></div>
+      </div>
+      <input class="para-input" id="input-resources" placeholder="เพิ่ม Resource..." onkeypress="if(event.key==='Enter')addParaItem('resources')" style="display:none"/>
+    </div>
+
+    <!-- ARCHIVE -->
+    <div class="para-card archive-card">
+      <div class="para-card-header">
+        <div class="para-icon">📦</div>
+        <div>
+          <div class="para-title">Archive</div>
+          <div class="para-subtitle">เสร็จแล้ว / หยุดพักไว้</div>
+        </div>
+        <button class="para-add-btn" onclick="addParaItem('archive')">+</button>
+      </div>
+      <div class="para-desc-box">ย้ายมาที่นี่แทนการลบ เผื่อวันหลังต้องการ</div>
+      <div class="para-list" id="list-archive">
+        <div class="para-item" style="opacity:0.5"><span class="para-item-dot"></span><span class="para-item-text">ย้ายของมาใส่ที่นี่เมื่อเสร็จแล้ว</span></div>
+      </div>
+      <input class="para-input" id="input-archive" placeholder="เพิ่ม Archive..." onkeypress="if(event.key==='Enter')addParaItem('archive')" style="display:none"/>
+    </div>
+
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+<script src="js/para.js"></script>
+</body>
+</html>

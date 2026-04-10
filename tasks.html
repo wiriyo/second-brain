@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✅ Tasks — Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">🧠</span><span class="logo-text">Second Brain</span></div>
+  <div class="sidebar-nav">
+    <a href="index.html" class="nav-item">🏠 หน้าหลัก</a>
+    <a href="inbox.html" class="nav-item">📥 Inbox <span class="badge" id="inbox-badge">0</span></a>
+    <a href="tasks.html" class="nav-item active">✅ Tasks</a>
+    <a href="para.html" class="nav-item">📂 PARA</a>
+    <a href="habit.html" class="nav-item">🎯 Habit Tracker</a>
+  </div>
+  <div class="sidebar-footer"><div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div></div>
+</nav>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">✅ Tasks</h1>
+    <p class="page-desc">จัดการงานทั้งหมด กรองตาม Priority และ PARA</p>
+  </div>
+
+  <!-- ADD TASK -->
+  <div class="card">
+    <h3 class="card-title">+ เพิ่ม Task ใหม่</h3>
+    <div class="task-form">
+      <input class="capture-input" id="task-name" placeholder="ชื่องาน..." />
+      <select class="select-input" id="task-priority">
+        <option value="high">🔴 High</option>
+        <option value="medium" selected>🟡 Medium</option>
+        <option value="low">🟢 Low</option>
+      </select>
+      <select class="select-input" id="task-para">
+        <option value="projects">📁 Projects</option>
+        <option value="areas">🌀 Areas</option>
+        <option value="resources">📚 Resources</option>
+      </select>
+      <input class="date-input" id="task-due" type="date" />
+      <button class="capture-btn" onclick="addTask()">+ เพิ่ม</button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filterTasks('all', this)">ทั้งหมด</button>
+    <button class="filter-btn" onclick="filterTasks('high', this)">🔴 High</button>
+    <button class="filter-btn" onclick="filterTasks('medium', this)">🟡 Medium</button>
+    <button class="filter-btn" onclick="filterTasks('low', this)">🟢 Low</button>
+    <button class="filter-btn" onclick="filterTasks('done', this)">✅ เสร็จแล้ว</button>
+  </div>
+
+  <!-- TASK SECTIONS -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">🔴 สำคัญมาก — ทำก่อนเลย</h3>
+      <span class="task-count" id="count-high">0</span>
+    </div>
+    <div id="tasks-high" class="task-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">🟡 ปานกลาง</h3>
+      <span class="task-count" id="count-medium">0</span>
+    </div>
+    <div id="tasks-medium" class="task-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">🟢 ไม่เร่งด่วน</h3>
+      <span class="task-count" id="count-low">0</span>
+    </div>
+    <div id="tasks-low" class="task-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">✅ เสร็จแล้ว</h3>
+      <button class="btn-outline" onclick="clearDoneTasks()">🗑️ ล้าง</button>
+    </div>
+    <div id="tasks-done" class="task-list"></div>
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+<script src="js/tasks.js"></script>
+</body>
+</html>

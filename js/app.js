@@ -7,6 +7,17 @@ const S = {
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
 };
 
+// ===== FOCUS MIGRATION =====
+// แปลง format เก่า (array of strings) เป็น format ใหม่ (array of objects)
+function _migrateFocus(raw) {
+  if (!raw || !Array.isArray(raw)) return [null, null, null];
+  return raw.map(item => {
+    if (item === null || item === undefined || item === '') return null;
+    if (typeof item === 'string') return { text: item, refType: null, refId: null, done: false };
+    return item; // new format already
+  });
+}
+
 // ===== STATE =====
 const state = {
   inbox: S.get('sb_inbox') || [],
@@ -21,7 +32,7 @@ const state = {
   streak: S.get('sb_streak') || 0,
   habitLog: S.get('sb_habitlog') || {},
   redeemLog: S.get('sb_redeemlog') || [],
-  focus: S.get('sb_focus') || ['', '', ''],
+  focus: _migrateFocus(S.get('sb_focus')),
 };
 
 // ===== DEDUP helpers — ล้าง duplicate ID ที่เกิดจาก type mismatch =====
@@ -199,15 +210,56 @@ function renderInboxPreview() {
 }
 
 // ===== FOCUS =====
-function toggleFocus(btn) { btn.closest('.focus-card').classList.toggle('done'); }
-function loadFocus() {
-  ['focus1','focus2','focus3'].forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.value = state.focus[i] || '';
-      el.addEventListener('input', () => { state.focus[i] = el.value; save(); });
+
+// ตั้งค่า focus item (เรียกจาก index.html picker)
+function setFocusItem(index, text, refType, refId) {
+  state.focus[index] = { text, refType: refType || null, refId: refId || null, done: false };
+  save();
+  if (typeof renderFocusCards === 'function') renderFocusCards();
+}
+
+// ล้าง focus slot
+function clearFocusItem(index) {
+  state.focus[index] = null;
+  save();
+  if (typeof renderFocusCards === 'function') renderFocusCards();
+}
+
+// กด ✓ บน focus card
+function completeFocus(index) {
+  const item = state.focus[index];
+  if (!item) return;
+
+  // toggle done
+  item.done = !item.done;
+
+  if (item.done) {
+    // ถ้าผูกกับ task → complete task + รับแต้ม
+    if (item.refType === 'task' && item.refId != null) {
+      const t = state.tasks.find(t => Number(t.id) === Number(item.refId));
+      if (t && !t.done) {
+        t.done = true;
+        state.points += 10;
+        save('tasks');
+        syncPoints();
+        showSyncBadge('✅ Task เสร็จแล้ว! +10 แต้ม 🎉');
+      }
     }
-  });
+    // ถ้าผูกกับ inbox → mark done
+    if (item.refType === 'inbox' && item.refId != null) {
+      const inbox = state.inbox.find(i => Number(i.id) === Number(item.refId));
+      if (inbox) { inbox.done = true; save('inbox'); }
+    }
+  }
+
+  save();
+  if (typeof renderFocusCards === 'function') renderFocusCards();
+  updateStats(); syncNav();
+}
+
+// โหลด focus (เรียกจาก DOMContentLoaded)
+function loadFocus() {
+  if (typeof renderFocusCards === 'function') renderFocusCards();
 }
 
 // ===== STATS =====

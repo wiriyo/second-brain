@@ -66,22 +66,8 @@
       <h2 class="section-title">🎯 โฟกัสวันนี้</h2>
       <span class="section-sub">3 งานสำคัญที่สุดของวันนี้</span>
     </div>
-    <div class="focus-grid">
-      <div class="focus-card priority-1">
-        <div class="priority-badge">#1</div>
-        <input class="focus-input" id="focus1" placeholder="งานสำคัญที่สุดวันนี้คืออะไร?" />
-        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
-      </div>
-      <div class="focus-card priority-2">
-        <div class="priority-badge">#2</div>
-        <input class="focus-input" id="focus2" placeholder="งานที่สองคืออะไร?" />
-        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
-      </div>
-      <div class="focus-card priority-3">
-        <div class="priority-badge">#3</div>
-        <input class="focus-input" id="focus3" placeholder="งานที่สามคืออะไร?" />
-        <div class="focus-check" onclick="toggleFocus(this)">✓</div>
-      </div>
+    <div class="focus-grid" id="focus-grid">
+      <!-- Rendered by renderFocusCards() -->
     </div>
   </section>
 
@@ -162,8 +148,215 @@
 
 </main>
 
+<!-- FOCUS PICKER MODAL -->
+<div class="modal" id="focus-picker-modal">
+  <div class="modal-box" style="max-width:500px;width:100%">
+    <h3 class="modal-title">📋 เลือกงานสำหรับโฟกัส</h3>
+    <div class="picker-tabs">
+      <button class="picker-tab active" data-tab="tasks" onclick="switchPickerTab('tasks')">✅ Tasks</button>
+      <button class="picker-tab" data-tab="inbox" onclick="switchPickerTab('inbox')">📥 Inbox</button>
+    </div>
+    <div class="picker-list" id="picker-list"></div>
+    <button class="modal-cancel" style="margin-top:12px" onclick="closeFocusPicker()">ยกเลิก</button>
+  </div>
+</div>
+
 <script src="js/app.js"></script>
+<style>
+  /* Focus card enhancements */
+  .focus-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .focus-source-tag {
+    font-size: 10px; font-weight: 700; color: var(--purple);
+    background: #f0ebff; padding: 1px 7px; border-radius: 10px;
+    display: inline-block; width: fit-content;
+  }
+  .focus-linked-name {
+    font-size: 14px; color: var(--text); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .focus-card.done .focus-linked-name { text-decoration: line-through; opacity: 0.6; }
+  .focus-pick-btn {
+    flex-shrink: 0; padding: 5px 10px; border-radius: 8px;
+    border: 1.5px solid var(--border); background: white;
+    font-size: 12px; cursor: pointer; color: var(--mid);
+    font-family: 'Sarabun', sans-serif; font-weight: 600;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .focus-pick-btn:hover { border-color: var(--purple); color: var(--purple); background: #f5f0ff; }
+  .focus-clear-btn {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+    border: 1.5px solid #e5e7eb; background: white; font-size: 11px;
+    cursor: pointer; color: var(--mid); transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .focus-clear-btn:hover { border-color: var(--red); color: var(--red); background: #fff5f5; }
+
+  /* Picker modal */
+  .picker-tabs {
+    display: flex; gap: 6px; margin-bottom: 12px;
+  }
+  .picker-tab {
+    padding: 6px 18px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: white; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Sarabun', sans-serif; color: var(--mid); transition: all 0.15s;
+  }
+  .picker-tab.active { background: var(--purple); color: white; border-color: var(--purple); }
+  .picker-list { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .picker-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all 0.15s;
+    background: #fafafa;
+  }
+  .picker-item:hover { background: #f0ebff; border-color: var(--purple); }
+  .picker-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .picker-name { flex: 1; font-size: 14px; color: var(--text); }
+  .picker-meta { font-size: 11px; color: var(--mid); flex-shrink: 0; }
+  .picker-empty { padding: 24px; text-align: center; color: var(--mid); font-size: 13px; }
+</style>
 <script>
+  let _pickerIndex = null;
+  let _pickerTab = 'tasks';
+
+  const FOCUS_PLACEHOLDERS = [
+    'งานสำคัญที่สุดวันนี้คืออะไร?',
+    'งานที่สองคืออะไร?',
+    'งานที่สามคืออะไร?'
+  ];
+
+  // ===== Render focus cards =====
+  function renderFocusCards() {
+    const grid = document.getElementById('focus-grid');
+    if (!grid) return;
+
+    grid.innerHTML = [0, 1, 2].map(i => {
+      const item = state.focus[i];
+      const priorityClass = `priority-${i + 1}`;
+      const isDone = item && item.done;
+      const isLinked = item && item.refType;
+
+      const badgeHtml = isLinked
+        ? `<span class="focus-source-tag">${item.refType === 'task' ? '📋 Task' : '📥 Inbox'}</span>`
+        : '';
+
+      const bodyHtml = isLinked
+        ? `<div class="focus-body">
+             ${badgeHtml}
+             <div class="focus-linked-name">${escFocus(item.text)}</div>
+           </div>`
+        : `<div class="focus-body">
+             <input class="focus-input" id="fi-${i}"
+               placeholder="${FOCUS_PLACEHOLDERS[i]}"
+               value="${item ? escFocus(item.text) : ''}"
+               oninput="onFocusInput(${i}, this.value)" />
+           </div>`;
+
+      const clearBtn = isLinked
+        ? `<button class="focus-clear-btn" onclick="clearFocusItem(${i})" title="ล้าง">✕</button>`
+        : '';
+
+      return `
+        <div class="focus-card ${priorityClass}${isDone ? ' done' : ''}" id="fc-${i}">
+          <div class="priority-badge">#${i + 1}</div>
+          ${bodyHtml}
+          <button class="focus-pick-btn" onclick="openFocusPicker(${i})">📋 เลือก</button>
+          ${clearBtn}
+          <div class="focus-check" onclick="completeFocus(${i})">✓</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function escFocus(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function onFocusInput(index, value) {
+    if (!state.focus[index]) state.focus[index] = { text: '', refType: null, refId: null, done: false };
+    state.focus[index].text = value;
+    save();
+  }
+
+  // ===== Picker =====
+  function openFocusPicker(index) {
+    _pickerIndex = index;
+    _pickerTab = 'tasks';
+    renderPickerList();
+    document.querySelectorAll('.picker-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === 'tasks');
+    });
+    document.getElementById('focus-picker-modal').classList.add('open');
+  }
+
+  function closeFocusPicker() {
+    document.getElementById('focus-picker-modal').classList.remove('open');
+    _pickerIndex = null;
+  }
+
+  function switchPickerTab(tab) {
+    _pickerTab = tab;
+    document.querySelectorAll('.picker-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderPickerList();
+  }
+
+  function renderPickerList() {
+    const el = document.getElementById('picker-list');
+    if (!el) return;
+
+    if (_pickerTab === 'tasks') {
+      // กรอง task ที่มี name จริงเท่านั้น ป้องกัน undefined โผล่
+      const tasks = state.tasks.filter(t => !t.done && t.name);
+      if (!tasks.length) {
+        el.innerHTML = '<div class="picker-empty">ไม่มีงานค้างค่ะ 🎉</div>'; return;
+      }
+      el.innerHTML = tasks.map(t => {
+        const color = t.priority === 'high' ? '#f87171' : t.priority === 'medium' ? '#fbbf24' : '#34d399';
+        const para = t.para === 'projects' ? '📁' : t.para === 'areas' ? '🌀' : '📚';
+        // ใช้ data-attribute แทน inline string ป้องกัน double-quote ใน HTML แตก
+        return `<div class="picker-item"
+            data-text="${escFocus(t.name)}"
+            data-reftype="task"
+            data-refid="${t.id}"
+            onclick="pickItemFromEl(this)">
+          <span class="picker-dot" style="background:${color}"></span>
+          <span class="picker-name">${escFocus(t.name)}</span>
+          <span class="picker-meta">${para} ${t.priority}</span>
+        </div>`;
+      }).join('');
+    } else {
+      const items = state.inbox.filter(i => !i.done && i.text);
+      if (!items.length) {
+        el.innerHTML = '<div class="picker-empty">Inbox ว่างแล้วค่ะ 🌸</div>'; return;
+      }
+      el.innerHTML = items.map(i =>
+        `<div class="picker-item"
+            data-text="${escFocus(i.text)}"
+            data-reftype="inbox"
+            data-refid="${i.id}"
+            onclick="pickItemFromEl(this)">
+          <span class="picker-dot" style="background:var(--pink)"></span>
+          <span class="picker-name">${escFocus(i.text)}</span>
+          <span class="picker-meta">📥 Inbox</span>
+        </div>`
+      ).join('');
+    }
+  }
+
+  // อ่านค่าจาก data-attribute แทนการรับ string โดยตรง
+  function pickItemFromEl(el) {
+    const text = el.dataset.text;       // HTML decode อัตโนมัติ ไม่มีปัญหา quote
+    const refType = el.dataset.reftype;
+    const refId = Number(el.dataset.refid);
+    if (_pickerIndex === null) return;
+    setFocusItem(_pickerIndex, text, refType, refId);
+    closeFocusPicker();
+  }
+
+  // ===== Init =====
   document.getElementById('quick-input').addEventListener('keypress', e => {
     if (e.key === 'Enter') quickCapture();
   });

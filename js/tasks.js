@@ -21,8 +21,9 @@ function renderTasks() {
   priorities.forEach(p => {
     const el = document.getElementById('tasks-' + p);
     const count = document.getElementById('count-' + p);
+    if (!el) return;
     const items = state.tasks.filter(t => t.priority === p && !t.done);
-    count.textContent = items.length;
+    if (count) count.textContent = items.length;
     if (!items.length) {
       el.innerHTML = '<div class="empty-state" style="padding:14px;font-size:13px">ไม่มีงานค่ะ 🎉</div>';
       return;
@@ -31,10 +32,25 @@ function renderTasks() {
   });
 
   const doneEl = document.getElementById('tasks-done');
-  const doneTasks = state.tasks.filter(t => t.done);
-  doneEl.innerHTML = doneTasks.length
-    ? doneTasks.map(t => taskHTML(t, true)).join('')
-    : '<div class="empty-state" style="padding:14px;font-size:13px">ยังไม่มีงานที่เสร็จค่ะ</div>';
+  if (doneEl) {
+    const doneTasks = state.tasks.filter(t => t.done);
+    doneEl.innerHTML = doneTasks.length
+      ? doneTasks.map(t => taskHTML(t, true)).join('')
+      : '<div class="empty-state" style="padding:14px;font-size:13px">ยังไม่มีงานที่เสร็จค่ะ</div>';
+  }
+
+  // Apply filter visibility
+  ['high', 'medium', 'low', 'done'].forEach(p => {
+    const el = document.getElementById('tasks-' + p);
+    if (!el) return;
+    const card = el.closest('.card');
+    if (!card) return;
+    if (currentFilter === 'all') {
+      card.style.display = '';
+    } else {
+      card.style.display = (currentFilter === p) ? '' : 'none';
+    }
+  });
 
   syncNav();
 }
@@ -55,14 +71,19 @@ function taskHTML(t, done = false) {
 }
 
 function completeTask(id) {
-  const t = state.tasks.find(t => t.id === id);
-  if (t) { t.done = true; state.points += 10; }
-  save(); renderTasks();
+  // ใช้ Number() ป้องกัน type mismatch ระหว่าง id จาก onclick (number) กับ t.id ใน state
+  const t = state.tasks.find(t => Number(t.id) === Number(id));
+  if (!t) return;
+  t.done = true;
+  state.points += 10;
+  save('tasks');
+  syncPoints();
+  renderTasks();
   showToast('✅ เสร็จแล้ว! +10 แต้ม 🎉');
 }
 
 function deleteTask(id) {
-  state.tasks = state.tasks.filter(t => t.id !== id);
+  state.tasks = state.tasks.filter(t => Number(t.id) !== Number(id));
   save('tasks'); renderTasks();
 }
 
@@ -74,20 +95,28 @@ function clearDoneTasks() {
 function filterTasks(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   renderTasks();
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast') || document.createElement('div');
-  t.className = 'toast show'; t.id = 'toast'; t.textContent = msg;
-  if (!document.getElementById('toast')) document.body.appendChild(t);
-  setTimeout(() => t.classList.remove('show'), 2500);
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   renderTasks();
-  document.getElementById('task-name').addEventListener('keypress', e => {
+  const nameInput = document.getElementById('task-name');
+  if (nameInput) nameInput.addEventListener('keypress', e => {
     if (e.key === 'Enter') addTask();
   });
 });

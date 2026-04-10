@@ -1,5 +1,5 @@
 // ===== CONFIG =====
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwXhdM9ldY9_mcjQze0TUOmVixP_DztyR5_vzo_DpCIPxcXwm1GXXpqm4LaqYHBKT_5SQ/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyIF-DXOreA1i-eFJJSKEjhvjvT8tueflebpiun8pmS/exec';
 
 // ===== STORAGE =====
 const S = {
@@ -11,6 +11,12 @@ const S = {
 const state = {
   inbox: S.get('sb_inbox') || [],
   tasks: S.get('sb_tasks') || [],
+  para: S.get('sb_para') || {
+    projects: ['คอร์ส Vibe Coding', 'เตรียมสไลด์ Day 1-5'],
+    areas: ['การสอน & ออกแบบหลักสูตร', 'IoT / ESP32 Development', 'Board Games Collection', 'สุขภาพ & ออกกำลังกาย'],
+    resources: ['ESP32-WROOM-32 Docs', 'Arduino Libraries ที่ดี', 'Zombicide Game Tips'],
+    archive: [],
+  },
   points: S.get('sb_points') || 0,
   streak: S.get('sb_streak') || 0,
   habitLog: S.get('sb_habitlog') || {},
@@ -18,10 +24,24 @@ const state = {
   focus: S.get('sb_focus') || ['', '', ''],
 };
 
+// ===== DEDUP helpers — ล้าง duplicate ID ที่เกิดจาก type mismatch =====
+function dedupById(arr) {
+  const seen = new Set();
+  return arr.filter(item => {
+    const key = String(item.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ===== SAVE LOCAL + SYNC =====
 function save(syncAction = null) {
+  state.inbox = dedupById(state.inbox);
+  state.tasks = dedupById(state.tasks);
   S.set('sb_inbox', state.inbox);
   S.set('sb_tasks', state.tasks);
+  S.set('sb_para', state.para);
   S.set('sb_points', state.points);
   S.set('sb_streak', state.streak);
   S.set('sb_habitlog', state.habitLog);
@@ -30,13 +50,12 @@ function save(syncAction = null) {
   if (syncAction === 'inbox') syncInbox();
   if (syncAction === 'tasks') syncTasks();
   if (syncAction === 'habits') syncHabits();
+  if (syncAction === 'points') syncPoints();
 }
 
 // ===== SYNC TO SHEETS =====
-// ===== JSONP helper — ใช้ GET ทุกอย่าง ไม่มี CORS ปัญหา =====
 function jsonpCall(params, onSuccess, label) {
   const id = 'cb_' + Date.now();
-  // Build URL โดยไม่ encode ซ้ำ
   const parts = Object.entries(params).map(([k,v]) => k + '=' + v);
   parts.push('callback=' + id);
   const url = SHEET_URL + '?' + parts.join('&');
@@ -67,10 +86,19 @@ async function syncTasks() {
 }
 
 async function syncHabits() {
+  // ส่ง points ไปพร้อมกับ habits เลย ประหยัด 1 call
   jsonpCall({
     action: 'saveHabits',
-    log: encodeURIComponent(JSON.stringify(state.habitLog))
+    log: encodeURIComponent(JSON.stringify(state.habitLog)),
+    points: state.points
   }, null, '🎯 Habits synced ✅');
+}
+
+async function syncPoints() {
+  jsonpCall({
+    action: 'savePoints',
+    points: state.points
+  }, null, '💎 Points synced ✅');
 }
 
 // ===== LOAD FROM SHEETS =====
@@ -78,17 +106,37 @@ function loadFromSheets() {
   showSyncBadge('🔄 กำลังโหลดข้อมูล...');
   jsonpCall({ action: 'getInbox' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      state.inbox = data; S.set('sb_inbox', data);
-      syncNav(); updateStats();
-      if (typeof renderInbox === 'function') renderInbox();
+      // ใช้ String() เปรียบเทียบ ID เพื่อป้องกัน type mismatch (number vs string จาก Sheets)
+      const localIds = new Set(state.inbox.map(i => String(i.id)));
+      const sheetsOnly = data.filter(i => !localIds.has(String(i.id)));
+      if (sheetsOnly.length > 0) {
+        state.inbox = [...state.inbox, ...sheetsOnly];
+        S.set('sb_inbox', state.inbox);
+        syncNav(); updateStats();
+        if (typeof renderInbox === 'function') renderInbox();
+      }
       showSyncBadge('☁️ โหลด Inbox จาก Sheets ✅');
+    }
+  });
+  jsonpCall({ action: 'getPoints' }, (data) => {
+    if (data && typeof data.points === 'number' && !isNaN(data.points)) {
+      state.points = data.points;
+      S.set('sb_points', data.points);
+      updateStats();
+      if (typeof updatePoints === 'function') updatePoints();
     }
   });
   jsonpCall({ action: 'getTasks' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      state.tasks = data; S.set('sb_tasks', data);
-      updateStats();
-      if (typeof renderTasks === 'function') renderTasks();
+      // ใช้ String() เปรียบเทียบ ID เพื่อป้องกัน type mismatch (number vs string จาก Sheets)
+      const localIds = new Set(state.tasks.map(t => String(t.id)));
+      const sheetsOnly = data.filter(t => !localIds.has(String(t.id)));
+      if (sheetsOnly.length > 0) {
+        state.tasks = [...state.tasks, ...sheetsOnly];
+        S.set('sb_tasks', state.tasks);
+        updateStats();
+        if (typeof renderTasks === 'function') renderTasks();
+      }
       showSyncBadge('☁️ โหลด Tasks จาก Sheets ✅');
     }
   });

@@ -1,5 +1,5 @@
 // ==========================================
-// Second Brain — Google Apps Script v3
+// Second Brain — Google Apps Script v4
 // ส่งทุกอย่างผ่าน GET เพื่อหลีก CORS ปัญหา
 // ==========================================
 
@@ -40,7 +40,21 @@ function doGet(e) {
           sheet.appendRow([date, habitId, done]);
         });
       });
+
+      // บันทึก points ไปด้วยพร้อมกันเลย (ประหยัด 1 JSONP call)
+      const pts = parseInt(e.parameter.points);
+      if (!isNaN(pts)) {
+        savePointsToSheet(ss, pts);
+      }
+
       result = { status: 'ok' };
+    }
+
+    // บันทึกแต้มอย่างเดียว (เรียกจาก task complete / reset)
+    if (action === 'savePoints') {
+      const pts = parseInt(e.parameter.points || '0');
+      savePointsToSheet(ss, pts);
+      result = { status: 'ok', points: pts };
     }
 
     // ===== LOAD ACTIONS =====
@@ -49,7 +63,8 @@ function doGet(e) {
       if (sheet && sheet.getLastRow() > 1) {
         const rows = sheet.getDataRange().getValues();
         result = rows.slice(1).map(r => ({
-          id: r[0], text: r[1], date: r[2],
+          id: Number(r[0]),  // บังคับ Number เสมอ ป้องกัน type mismatch
+          text: r[1], date: r[2],
           done: r[3] === true || r[3] === 'true',
           tag: r[4] || ''
         })).filter(r => r.text);
@@ -63,11 +78,22 @@ function doGet(e) {
       if (sheet && sheet.getLastRow() > 1) {
         const rows = sheet.getDataRange().getValues();
         result = rows.slice(1).map(r => ({
-          id: r[0], name: r[1], priority: r[2], para: r[3],
+          id: Number(r[0]),  // บังคับ Number เสมอ ป้องกัน type mismatch
+          name: r[1], priority: r[2], para: r[3],
           due: r[4]||'', done: r[5] === true || r[5] === 'true', date: r[6]
         })).filter(r => r.name);
       } else {
         result = [];
+      }
+    }
+
+    if (action === 'getPoints') {
+      const sheet = ss.getSheetByName('Points');
+      if (sheet && sheet.getLastRow() > 1) {
+        const val = sheet.getRange(2, 2).getValue();
+        result = { points: parseInt(val) || 0 };
+      } else {
+        result = { points: 0 };
       }
     }
 
@@ -81,6 +107,14 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
+// ===== HELPERS =====
 function getOrCreate(ss, name) {
   return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+function savePointsToSheet(ss, pts) {
+  const sheet = getOrCreate(ss, 'Points');
+  sheet.clearContents();
+  sheet.appendRow(['key', 'value', 'updated']);
+  sheet.appendRow(['points', pts, new Date().toISOString()]);
 }

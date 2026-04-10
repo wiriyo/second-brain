@@ -22,8 +22,27 @@ function getTodayLog() {
   return state.habitLog[t];
 }
 
+function calculateStreak() {
+  let streak = 0;
+  const now = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const log = state.habitLog[key] || {};
+    const anyDone = HABITS.some(h => log[h.id]);
+    if (!anyDone) break;
+    streak++;
+  }
+  state.streak = streak;
+  const el = document.getElementById('streak-num');
+  if (el) el.textContent = streak;
+  updateStats();
+}
+
 function renderHabits() {
   const grid = document.getElementById('habit-grid');
+  if (!grid) return;
   const log = getTodayLog();
   grid.innerHTML = HABITS.map(h => `
     <div class="habit-card ${log[h.id] ? 'checked' : ''}" onclick="toggleHabit('${h.id}', ${h.pts})">
@@ -45,6 +64,7 @@ function toggleHabit(id, pts) {
     log[id] = true;
     state.points += pts;
   }
+  calculateStreak();
   save('habits');
   renderHabits();
   updatePoints();
@@ -57,22 +77,26 @@ function updateProgress() {
   const done = HABITS.filter(h => log[h.id]).length;
   const total = HABITS.length;
   const pct = Math.round(done / total * 100);
-  document.getElementById('done-count').textContent = done;
-  document.getElementById('total-count').textContent = total;
-  document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('progress-fill').style.width = pct + '%';
+  const e = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  e('done-count', done);
+  e('total-count', total);
+  e('progress-pct', pct + '%');
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = pct + '%';
   const todayPts = HABITS.filter(h => log[h.id]).reduce((s, h) => s + h.pts, 0);
-  document.getElementById('today-score').textContent = todayPts;
+  e('today-score', todayPts);
 }
 
 function updatePoints() {
-  document.getElementById('total-points').textContent = state.points;
-  document.getElementById('shop-points').textContent = state.points;
+  const e = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  e('total-points', state.points);
+  e('shop-points', state.points);
   document.querySelectorAll('#nav-points').forEach(el => el.textContent = state.points);
 }
 
 function renderWeek() {
   const grid = document.getElementById('week-grid');
+  if (!grid) return;
   const days = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   const now = new Date();
   const startOfWeek = new Date(now);
@@ -96,6 +120,7 @@ function renderWeek() {
 
 function renderRewards() {
   const grid = document.getElementById('reward-grid');
+  if (!grid) return;
   grid.innerHTML = REWARDS.map(r => `
     <div class="reward-card ${state.points < r.cost ? 'locked' : ''}" onclick="redeemReward('${r.id}', ${r.cost}, '${r.name}', '${r.emoji}')">
       <span class="reward-emoji">${r.emoji}</span>
@@ -123,6 +148,7 @@ function renderRedeemLog() {
   const log = state.redeemLog;
   const card = document.getElementById('redeem-log-card');
   const el = document.getElementById('redeem-log');
+  if (!card || !el) return;
   if (!log.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
   el.innerHTML = log.slice().reverse().map(r => `
@@ -135,10 +161,27 @@ function renderRedeemLog() {
   `).join('');
 }
 
+function resetPoints() {
+  if (!confirm('⚠️ ยืนยันการ Reset แต้มทั้งหมดเป็น 0 ใช่ไหมคะ?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้นะคะ')) return;
+  state.points = 0;
+  save('points'); // sync 0 ขึ้น Sheets ทันที
+  updatePoints();
+  renderRewards();
+  showToast('🔄 Reset แต้มเรียบร้อยแล้วค่ะ');
+}
+
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -147,5 +190,5 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWeek();
   renderRewards();
   renderRedeemLog();
-  document.getElementById('streak-num').textContent = state.streak;
+  calculateStreak();
 });

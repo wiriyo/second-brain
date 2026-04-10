@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧪 Second Brain — Test Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #f472b6; --purple: #a78bfa; --green: #34d399;
+    --red: #f87171; --yellow: #fbbf24; --bg: #f0eef8;
+    --card: #fff; --text: #1e1b3a; --mid: #6b6890;
+    --radius: 14px; --shadow: 0 4px 20px rgba(100,80,180,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); padding: 24px; }
+  h1 { font-family: 'Mitr', sans-serif; font-size: 26px; margin-bottom: 6px; }
+  .subtitle { color: var(--mid); font-size: 14px; margin-bottom: 24px; }
+
+  /* Summary bar */
+  .summary {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card); border-radius: var(--radius);
+    padding: 18px 24px; margin-bottom: 24px;
+    box-shadow: var(--shadow); flex-wrap: wrap;
+  }
+  .summary-title { font-size: 15px; font-weight: 600; margin-right: 8px; }
+  .pill { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  .pill-pass { background: #d1fae5; color: #065f46; }
+  .pill-fail { background: #fee2e2; color: #991b1b; }
+  .pill-total { background: #ede9fe; color: #4c1d95; }
+  .run-btn {
+    margin-left: auto; padding: 8px 22px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white; border: none; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: transform 0.15s;
+  }
+  .run-btn:hover { transform: translateY(-2px); }
+
+  /* Groups */
+  .group { background: var(--card); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .group-title { font-family: 'Mitr', sans-serif; font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .group-badge { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+  .group-all-pass { background: #d1fae5; color: #065f46; }
+  .group-has-fail { background: #fee2e2; color: #991b1b; }
+
+  /* Test rows */
+  .test-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f3f0fb; font-size: 13px; }
+  .test-row:last-child { border-bottom: none; }
+  .icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .test-name { flex: 1; line-height: 1.5; }
+  .test-msg { color: var(--red); font-size: 12px; margin-top: 2px; font-family: monospace; background: #fff5f5; padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+
+  /* Loading */
+  .loading { color: var(--mid); font-size: 14px; padding: 16px 0; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--purple); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<h1>🧪 Second Brain — Test Suite</h1>
+<p class="subtitle">ทดสอบทุก flow อัตโนมัติ — กด Run Tests เพื่อเริ่มค่ะ</p>
+
+<div class="summary" id="summary">
+  <span class="summary-title">📊 ผลรวม:</span>
+  <span class="pill pill-total" id="sum-total">— tests</span>
+  <span class="pill pill-pass" id="sum-pass">✅ 0 ผ่าน</span>
+  <span class="pill pill-fail" id="sum-fail">❌ 0 ไม่ผ่าน</span>
+  <button class="run-btn" onclick="runAllTests()">▶ Run Tests</button>
+</div>
+
+<div id="results"></div>
+
+<!-- ===== Hidden DOM fixtures needed by all JS modules ===== -->
+<div id="fixtures" style="display:none">
+  <!-- app.js -->
+  <span id="inbox-badge">0</span>
+  <span id="nav-points">0</span>
+  <div id="sync-badge"></div>
+  <div id="hero-date"></div>
+  <div id="today-date"></div>
+  <div id="stat-inbox">0</div>
+  <div id="stat-tasks">0</div>
+  <div id="stat-points">0</div>
+  <div id="stat-streak">0</div>
+  <div id="card-inbox">0 รายการ</div>
+  <div id="card-tasks">0 งาน</div>
+  <div id="card-points">0 แต้ม</div>
+  <div id="inbox-preview"></div>
+  <input id="quick-input" />
+  <input id="focus1" /><input id="focus2" /><input id="focus3" />
+  <!-- inbox.js -->
+  <input id="inbox-input" value="" />
+  <div id="inbox-list"></div>
+  <span id="inbox-count">0</span>
+  <div id="move-modal" class="modal"></div>
+  <!-- tasks.js -->
+  <input id="task-name" value="" />
+  <select id="task-priority">
+    <option value="high">High</option>
+    <option value="medium" selected>Medium</option>
+    <option value="low">Low</option>
+  </select>
+  <select id="task-para">
+    <option value="projects" selected>Projects</option>
+    <option value="areas">Areas</option>
+    <option value="resources">Resources</option>
+  </select>
+  <input id="task-due" type="date" value="" />
+  <!-- tasks.js sections wrapped in .card for filter test -->
+  <div class="card"><div id="tasks-high"></div></div>
+  <div class="card"><div id="tasks-medium"></div></div>
+  <div class="card"><div id="tasks-low"></div></div>
+  <div class="card"><div id="tasks-done"></div></div>
+  <span id="count-high">0</span>
+  <span id="count-medium">0</span>
+  <span id="count-low">0</span>
+  <!-- habit.js -->
+  <div id="habit-grid"></div>
+  <div id="done-count">0</div>
+  <div id="total-count">0</div>
+  <div id="progress-pct">0%</div>
+  <div id="progress-fill" style="width:0%"></div>
+  <div id="today-score">0</div>
+  <div id="week-grid"></div>
+  <div id="reward-grid"></div>
+  <div id="redeem-log-card" style="display:none"></div>
+  <div id="redeem-log"></div>
+  <div id="total-points">0</div>
+  <div id="shop-points">0</div>
+  <div id="streak-num">0</div>
+  <!-- para.js -->
+  <div id="list-projects"></div>
+  <div id="list-areas"></div>
+  <div id="list-resources"></div>
+  <div id="list-archive"></div>
+  <input id="input-projects" style="display:none" />
+  <input id="input-areas" style="display:none" />
+  <input id="input-resources" style="display:none" />
+  <input id="input-archive" style="display:none" />
+  <div id="toast"></div>
+</div>
+
+<!-- Load all app modules -->
+<script>
+  // 1. Clear localStorage ก่อน load เพื่อเริ่มต้น clean state
+  localStorage.clear();
+</script>
+<script src="js/app.js"></script>
+<script>
+  // 2. Override loadFromSheets ก่อน DOMContentLoaded fire
+  //    เพื่อไม่ให้ JSONP call จริงในระหว่าง test
+  loadFromSheets = function() { /* mocked in test mode */ };
+</script>
+<script src="js/inbox.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/habit.js"></script>
+<script src="js/para.js"></script>
+
+<script>
+// ===== TEST FRAMEWORK =====
+
+class TestSuite {
+  constructor() {
+    this.groups = [];
+    this._current = null;
+  }
+  group(name) {
+    this._current = { name, tests: [] };
+    this.groups.push(this._current);
+  }
+  assert(name, condition, failMsg = '') {
+    this._current.tests.push({ name, pass: !!condition, msg: condition ? '' : failMsg });
+  }
+  assertEqual(name, actual, expected) {
+    const pass = JSON.stringify(actual) === JSON.stringify(expected);
+    this._current.tests.push({
+      name, pass,
+      msg: pass ? '' : `คาดหวัง: ${JSON.stringify(expected)} | ได้: ${JSON.stringify(actual)}`
+    });
+  }
+  get total() { return this.groups.reduce((s, g) => s + g.tests.length, 0); }
+  get passed() { return this.groups.reduce((s, g) => s + g.tests.filter(t => t.pass).length, 0); }
+  get failed() { return this.total - this.passed; }
+}
+
+// ===== STATE RESET =====
+function resetState() {
+  localStorage.clear();
+  state.inbox = [];
+  state.tasks = [];
+  state.para = { projects: [], areas: [], resources: [], archive: [] };
+  state.points = 0;
+  state.streak = 0;
+  state.habitLog = {};
+  state.redeemLog = [];
+  state.focus = ['', '', ''];
+  currentFilter = 'all';
+  // Clean up dynamic modals
+  const modal = document.getElementById('task-from-inbox-modal');
+  if (modal) modal.remove();
+}
+
+// ===== RUN ALL TESTS =====
+function runAllTests() {
+  document.getElementById('results').innerHTML = '<div class="loading"><span class="spinner"></span>กำลังรัน tests...</div>';
+  document.getElementById('sum-pass').textContent = '✅ —';
+  document.getElementById('sum-fail').textContent = '❌ —';
+  document.getElementById('sum-total').textContent = '— tests';
+
+  setTimeout(() => {
+    const suite = new TestSuite();
+
+    // ============================================================
+    // GROUP 1: State & LocalStorage
+    // ============================================================
+    suite.group('💾 State & LocalStorage');
+    resetState();
+
+    state.inbox.push({ id: 1, text: 'test', date: '2026-01-01', done: false, tag: null });
+    save();
+    suite.assert('save() เขียนลง localStorage', localStorage.getItem('sb_inbox') !== null);
+
+    const loaded = JSON.parse(localStorage.getItem('sb_inbox'));
+    suite.assert('โหลด inbox จาก localStorage ได้', Array.isArray(loaded) && loaded.length === 1);
+    suite.assertEqual('ข้อมูลที่โหลดถูกต้อง', loaded[0].text, 'test');
+
+    state.tasks.push({ id: 2, name: 'task', priority: 'high', para: 'projects', due: '', done: false, date: '2026-01-01' });
+    save();
+    const loadedTasks = JSON.parse(localStorage.getItem('sb_tasks'));
+    suite.assert('save() บันทึก tasks ด้วย', Array.isArray(loadedTasks) && loadedTasks.length === 1);
+
+    state.para.projects.push('test project');
+    save();
+    const loadedPara = JSON.parse(localStorage.getItem('sb_para'));
+    suite.assert('save() บันทึก para ด้วย', loadedPara && loadedPara.projects.length === 1);
+
+    // ============================================================
+    // GROUP 2: Inbox — CRUD
+    // ============================================================
+    suite.group('📥 Inbox — เพิ่ม / ลบ / จัดการ');
+    resetState();
+
+    // เพิ่ม item ปกติ
+    document.getElementById('inbox-input').value = 'ทดสอบ inbox item';
+    addInboxItem();
+    suite.assert('เพิ่ม inbox item ได้', state.inbox.length === 1);
+    suite.assertEqual('text ถูกต้อง', state.inbox[0].text, 'ทดสอบ inbox item');
+    suite.assertEqual('done เป็น false', state.inbox[0].done, false);
+    suite.assert('มี id (number)', typeof state.inbox[0].id === 'number');
+    suite.assert('มี date (YYYY-MM-DD)', /^\d{4}-\d{2}-\d{2}$/.test(state.inbox[0].date));
+    suite.assert('บันทึกลง localStorage ด้วย', JSON.parse(localStorage.getItem('sb_inbox')).length === 1);
+
+    // ไม่เพิ่ม empty
+    document.getElementById('inbox-input').value = '   ';
+    addInboxItem();
+    suite.assert('ไม่เพิ่ม item ว่าง', state.inbox.length === 1);
+
+    // ไม่เพิ่ม empty string จริงๆ
+    document.getElementById('inbox-input').value = '';
+    addInboxItem();
+    suite.assert('ไม่เพิ่ม empty string', state.inbox.length === 1);
+
+    // เพิ่มอีก item แล้วลบ
+    document.getElementById('inbox-input').value = 'item ที่ 2';
+    addInboxItem();
+    suite.assert('เพิ่ม item ที่ 2 ได้', state.inbox.length === 2);
+    const id2 = state.inbox[1].id;
+    deleteInboxItem(id2);
+    suite.assert('ลบ inbox item ได้', state.inbox.length === 1);
+    suite.assert('ลบถูก item', state.inbox[0].text === 'ทดสอบ inbox item');
+
+    // clearDone
+    state.inbox[0].done = true;
+    document.getElementById('inbox-input').value = 'item ใหม่';
+    addInboxItem();
+    suite.assert('มี 2 item (1 done, 1 active)', state.inbox.length === 2);
+    clearDone();
+    suite.assert('clearDone() ลบเฉพาะ done items', state.inbox.length === 1);
+    suite.assert('item ที่เหลือคือ active item', state.inbox[0].done === false);
+
+    // ============================================================
+    // GROUP 3: Inbox — Move Item
+    // ============================================================
+    suite.group('📥 Inbox — ย้าย Item');
+    resetState();
+
+    state.inbox.push({ id: 10, text: 'move test', date: '2026-01-01', done: false, tag: null });
+    selectedItemId = 10;
+
+    // Move to areas
+    moveItem('areas');
+    suite.assert("moveItem('areas') mark done", state.inbox[0].done === true);
+    suite.assertEqual("moveItem('areas') tag ถูกต้อง", state.inbox[0].tag, '🌀 Areas');
+
+    // Reset & move to resources
+    state.inbox[0].done = false; state.inbox[0].tag = null; selectedItemId = 10;
+    moveItem('resources');
+    suite.assertEqual("moveItem('resources') tag ถูกต้อง", state.inbox[0].tag, '📚 Resources');
+
+    // Reset & move to archive
+    state.inbox[0].done = false; state.inbox[0].tag = null; selectedItemId = 10;
+    moveItem('archive');
+    suite.assertEqual("moveItem('archive') tag ถูกต้อง", state.inbox[0].tag, '📦 Archive');
+
+    // Reset & move to done
+    state.inbox[0].done = false; state.inbox[0].tag = null; selectedItemId = 10;
+    moveItem('done');
+    suite.assert("moveItem('done') mark done", state.inbox[0].done === true);
+    suite.assertEqual("moveItem('done') tag ถูกต้อง", state.inbox[0].tag, '✅ จัดแล้ว');
+
+    // ============================================================
+    // GROUP 4: Inbox → Task Flow
+    // ============================================================
+    suite.group('📥➡️✅ Inbox → Task (createTaskFromInbox)');
+    resetState();
+
+    state.inbox.push({ id: 99, text: 'งานจาก inbox', date: '2026-01-01', done: false, tag: null });
+
+    // สร้าง modal elements ก่อน (mock สำหรับ test)
+    if (!document.getElementById('task-from-inbox-modal')) {
+      const m = document.createElement('div');
+      m.id = 'task-from-inbox-modal';
+      m.innerHTML = `
+        <input id="task-inbox-name" value="งานจาก inbox" />
+        <select id="task-inbox-priority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>
+        <select id="task-inbox-para"><option value="projects" selected>Projects</option><option value="areas">Areas</option></select>
+        <input id="task-inbox-due" value="" />
+      `;
+      m.style.display = 'none';
+      document.getElementById('fixtures').appendChild(m);
+    }
+
+    const tasksBefore = state.tasks.length;
+    createTaskFromInbox(99);
+
+    suite.assert('สร้าง task ได้', state.tasks.length === tasksBefore + 1);
+    const newTask = state.tasks[state.tasks.length - 1];
+    suite.assertEqual('task.done เป็น false', newTask.done, false);
+    suite.assertEqual('task.name ถูกต้อง', newTask.name, 'งานจาก inbox');
+    suite.assert('task มี id', typeof newTask.id === 'number');
+    suite.assert('inbox item ถูก mark done', state.inbox.find(i => i.id === 99).done === true);
+    suite.assertEqual('inbox item tag ถูกต้อง', state.inbox.find(i => i.id === 99).tag, '📁 สร้าง Task แล้ว');
+    suite.assert('task บันทึกลง localStorage', JSON.parse(localStorage.getItem('sb_tasks')).length > 0);
+    suite.assertEqual('task ใหม่ใน localStorage done=false',
+      JSON.parse(localStorage.getItem('sb_tasks')).find(t => t.id === newTask.id).done, false);
+
+    // ============================================================
+    // GROUP 5: Tasks — CRUD
+    // ============================================================
+    suite.group('✅ Tasks — เพิ่ม / เสร็จ / ลบ');
+    resetState();
+
+    // เพิ่ม task
+    document.getElementById('task-name').value = 'งาน high priority';
+    document.getElementById('task-priority').value = 'high';
+    document.getElementById('task-para').value = 'projects';
+    document.getElementById('task-due').value = '2026-12-31';
+    addTask();
+    suite.assert('addTask() เพิ่ม task ได้', state.tasks.length === 1);
+    suite.assertEqual('priority ถูกต้อง', state.tasks[0].priority, 'high');
+    suite.assertEqual('para ถูกต้อง', state.tasks[0].para, 'projects');
+    suite.assertEqual('due ถูกต้อง', state.tasks[0].due, '2026-12-31');
+    suite.assertEqual('done เป็น false', state.tasks[0].done, false);
+    suite.assert('input ถูกเคลียร์', document.getElementById('task-name').value === '');
+
+    // ไม่เพิ่ม task ว่าง
+    document.getElementById('task-name').value = '';
+    addTask();
+    suite.assert('ไม่เพิ่ม task ว่าง', state.tasks.length === 1);
+
+    // เพิ่ม medium และ low
+    document.getElementById('task-name').value = 'งาน medium';
+    document.getElementById('task-priority').value = 'medium';
+    addTask();
+    document.getElementById('task-name').value = 'งาน low';
+    document.getElementById('task-priority').value = 'low';
+    addTask();
+    suite.assert('มี 3 tasks รวม', state.tasks.length === 3);
+
+    // completeTask
+    const taskId = state.tasks[0].id;
+    const pointsBefore = state.points;
+    completeTask(taskId);
+    suite.assert('completeTask() mark done', state.tasks.find(t => t.id === taskId).done === true);
+    suite.assertEqual('ได้รับ +10 points', state.points, pointsBefore + 10);
+    suite.assert('task บันทึกลง localStorage', JSON.parse(localStorage.getItem('sb_tasks')).find(t => t.id === taskId).done === true);
+
+    // clearDoneTasks
+    clearDoneTasks();
+    suite.assert('clearDoneTasks() ลบ done tasks', state.tasks.every(t => !t.done));
+    suite.assertEqual('เหลือ 2 tasks', state.tasks.length, 2);
+
+    // deleteTask
+    const tid = state.tasks[0].id;
+    deleteTask(tid);
+    suite.assert('deleteTask() ลบได้', state.tasks.length === 1);
+    suite.assert('ลบถูก task', !state.tasks.find(t => t.id === tid));
+
+    // ============================================================
+    // GROUP 6: Tasks — Filter
+    // ============================================================
+    suite.group('✅ Tasks — Filter');
+    resetState();
+
+    // เพิ่ม tasks หลาย priority
+    state.tasks = [
+      { id: 1, name: 'H1', priority: 'high',   para: 'projects', due: '', done: false, date: '2026-01-01' },
+      { id: 2, name: 'M1', priority: 'medium',  para: 'projects', due: '', done: false, date: '2026-01-01' },
+      { id: 3, name: 'L1', priority: 'low',     para: 'projects', due: '', done: false, date: '2026-01-01' },
+      { id: 4, name: 'D1', priority: 'medium',  para: 'projects', due: '', done: true,  date: '2026-01-01' },
+    ];
+    renderTasks();
+
+    // filter all
+    filterTasks('all', null);
+    suite.assert("filter 'all' — high card แสดง", document.getElementById('tasks-high').closest('.card').style.display !== 'none');
+    suite.assert("filter 'all' — medium card แสดง", document.getElementById('tasks-medium').closest('.card').style.display !== 'none');
+    suite.assert("filter 'all' — low card แสดง", document.getElementById('tasks-low').closest('.card').style.display !== 'none');
+    suite.assert("filter 'all' — done card แสดง", document.getElementById('tasks-done').closest('.card').style.display !== 'none');
+
+    // filter high
+    filterTasks('high', null);
+    suite.assert("filter 'high' — high card แสดง", document.getElementById('tasks-high').closest('.card').style.display !== 'none');
+    suite.assert("filter 'high' — medium card ซ่อน", document.getElementById('tasks-medium').closest('.card').style.display === 'none');
+    suite.assert("filter 'high' — low card ซ่อน", document.getElementById('tasks-low').closest('.card').style.display === 'none');
+    suite.assert("filter 'high' — done card ซ่อน", document.getElementById('tasks-done').closest('.card').style.display === 'none');
+
+    // filter done
+    filterTasks('done', null);
+    suite.assert("filter 'done' — done card แสดง", document.getElementById('tasks-done').closest('.card').style.display !== 'none');
+    suite.assert("filter 'done' — high card ซ่อน", document.getElementById('tasks-high').closest('.card').style.display === 'none');
+
+    // reset filter
+    filterTasks('all', null);
+
+    // ============================================================
+    // GROUP 7: Habits — Toggle & Points
+    // ============================================================
+    suite.group('🎯 Habits — Toggle & Points');
+    resetState();
+
+    const startPts = state.points;
+
+    // toggle inbox habit (10 pts)
+    toggleHabit('inbox', 10);
+    suite.assert('toggleHabit() เพิ่ม points', state.points === startPts + 10);
+    suite.assert('log บันทึก true', getTodayLog()['inbox'] === true);
+
+    // toggle อีกครั้ง → ลด points
+    toggleHabit('inbox', 10);
+    suite.assert('toggleHabit() ครั้ง 2 ลด points', state.points === startPts);
+    suite.assert('log เป็น false', getTodayLog()['inbox'] === false);
+
+    // points ไม่ติดลบ
+    state.points = 0;
+    toggleHabit('inbox', 10); // add 10
+    toggleHabit('inbox', 10); // remove 10 → 0
+    suite.assert('points ไม่ต่ำกว่า 0', state.points >= 0);
+
+    // toggle หลาย habits
+    toggleHabit('inbox', 10);
+    toggleHabit('read', 15);
+    toggleHabit('focus', 20);
+    const expectedPts = 10 + 15 + 20;
+    suite.assert('toggle 3 habits รวม points ถูกต้อง', state.points === expectedPts,
+      `points = ${state.points}, ควรเป็น ${expectedPts}`);
+
+    // บันทึกลง localStorage
+    suite.assert('habits บันทึกลง localStorage', localStorage.getItem('sb_habitlog') !== null);
+
+    // ============================================================
+    // GROUP 8: Habits — Streak
+    // ============================================================
+    suite.group('🔥 Habits — Streak');
+    resetState();
+
+    // วันนี้ยังไม่ทำ → streak = 0
+    calculateStreak();
+    suite.assertEqual('ยังไม่ทำ habit → streak = 0', state.streak, 0);
+
+    // ทำ habit วันนี้ → streak = 1
+    toggleHabit('inbox', 10);
+    suite.assertEqual('ทำวันนี้ → streak = 1', state.streak, 1);
+
+    // ปลอม habitLog เป็น 3 วันติดต่อกัน
+    const d0 = today();
+    const d1 = new Date(); d1.setDate(d1.getDate() - 1); const k1 = d1.toISOString().split('T')[0];
+    const d2 = new Date(); d2.setDate(d2.getDate() - 2); const k2 = d2.toISOString().split('T')[0];
+    state.habitLog[k1] = { inbox: true };
+    state.habitLog[k2] = { read: true };
+    calculateStreak();
+    suite.assertEqual('3 วันติด → streak = 3', state.streak, 3);
+
+    // มีช่องว่าง → streak หยุด
+    const d4 = new Date(); d4.setDate(d4.getDate() - 4); const k4 = d4.toISOString().split('T')[0];
+    state.habitLog[k4] = { walk: true }; // วันที่ 4 (ข้าม 3)
+    calculateStreak();
+    suite.assertEqual('มีช่องว่าง → streak ยังเป็น 3', state.streak, 3);
+
+    // ============================================================
+    // GROUP 9: Rewards — Redeem
+    // ============================================================
+    suite.group('🎁 Rewards — แลกรางวัล');
+    resetState();
+
+    // แต้มไม่พอ → reject
+    state.points = 30;
+    const logBefore = state.redeemLog.length;
+    redeemReward('tea', 50, 'ชาเย็น/กาแฟ', '☕');
+    suite.assert('แต้มไม่พอ → ไม่หักแต้ม', state.points === 30);
+    suite.assert('แต้มไม่พอ → redeemLog ไม่เพิ่ม', state.redeemLog.length === logBefore);
+
+    // แต้มพอ → redeem
+    state.points = 100;
+    redeemReward('tea', 50, 'ชาเย็น/กาแฟ', '☕');
+    suite.assertEqual('แต้มพอ → หักแต้มถูกต้อง', state.points, 50);
+    suite.assert('redeemLog เพิ่ม entry', state.redeemLog.length === 1);
+    suite.assertEqual('redeemLog บันทึก name ถูกต้อง', state.redeemLog[0].name, 'ชาเย็น/กาแฟ');
+    suite.assertEqual('redeemLog บันทึก cost ถูกต้อง', state.redeemLog[0].cost, 50);
+    suite.assert('บันทึกลง localStorage', JSON.parse(localStorage.getItem('sb_redeemlog')).length === 1);
+
+    // redeem อีกรางวัล
+    redeemReward('movie', 100, 'ดูหนัง', '🎬');
+    suite.assert('แต้มไม่พอ (50 < 100) → ไม่หัก', state.points === 50);
+    suite.assert('redeemLog ยังเป็น 1', state.redeemLog.length === 1);
+
+    // ============================================================
+    // GROUP 10: PARA — Persistence
+    // ============================================================
+    suite.group('📂 PARA — บันทึกและโหลดข้อมูล');
+    resetState();
+
+    // เพิ่ม item ผ่าน saveParaItem
+    document.getElementById('input-projects').value = 'โปรเจกต์ทดสอบ';
+    saveParaItem('projects');
+    suite.assert('saveParaItem() เพิ่มใน state.para', state.para.projects.length === 1);
+    suite.assertEqual('text ถูกต้อง', state.para.projects[0], 'โปรเจกต์ทดสอบ');
+    suite.assert('input ถูกเคลียร์', document.getElementById('input-projects').value === '');
+    suite.assert('บันทึกลง localStorage', !!JSON.parse(localStorage.getItem('sb_para')));
+
+    // ไม่เพิ่ม empty
+    document.getElementById('input-projects').value = '   ';
+    saveParaItem('projects');
+    suite.assert('ไม่เพิ่ม item ว่าง', state.para.projects.length === 1);
+
+    // เพิ่มหลายหมวด
+    document.getElementById('input-areas').value = 'area ทดสอบ';
+    saveParaItem('areas');
+    document.getElementById('input-resources').value = 'resource ทดสอบ';
+    saveParaItem('resources');
+    document.getElementById('input-archive').value = 'archive ทดสอบ';
+    saveParaItem('archive');
+    suite.assert('เพิ่ม areas ได้', state.para.areas.length === 1);
+    suite.assert('เพิ่ม resources ได้', state.para.resources.length === 1);
+    suite.assert('เพิ่ม archive ได้', state.para.archive.length === 1);
+
+    // deleteParaItem
+    document.getElementById('input-projects').value = 'โปรเจกต์ที่ 2';
+    saveParaItem('projects');
+    suite.assert('มี 2 projects', state.para.projects.length === 2);
+    deleteParaItem('projects', 0);
+    suite.assert('deleteParaItem() ลบได้', state.para.projects.length === 1);
+    suite.assertEqual('ลบถูก index', state.para.projects[0], 'โปรเจกต์ที่ 2');
+
+    // render จาก state
+    renderPara();
+    const listEl = document.getElementById('list-projects');
+    suite.assert('renderPara() render item ใน DOM', listEl.querySelectorAll('.para-item').length > 0);
+    suite.assert('renderPara() แสดง text ถูกต้อง', listEl.textContent.includes('โปรเจกต์ที่ 2'));
+
+    // ทดสอบ persistence (simulate reload จาก localStorage)
+    const savedPara = JSON.parse(localStorage.getItem('sb_para'));
+    suite.assert('para ใน localStorage มี projects', savedPara && savedPara.projects.length > 0);
+
+    // ============================================================
+    // GROUP 11: Quick Capture (Dashboard)
+    // ============================================================
+    suite.group('⚡ Quick Capture');
+    resetState();
+
+    document.getElementById('quick-input').value = 'quick capture ทดสอบ';
+    quickCapture();
+    suite.assert('quickCapture() เพิ่มลง inbox', state.inbox.length === 1);
+    suite.assertEqual('text ถูกต้อง', state.inbox[0].text, 'quick capture ทดสอบ');
+    suite.assert('input ถูกเคลียร์', document.getElementById('quick-input').value === '');
+
+    // empty → ไม่เพิ่ม
+    document.getElementById('quick-input').value = '';
+    quickCapture();
+    suite.assert('quickCapture() ไม่เพิ่ม empty', state.inbox.length === 1);
+
+    // ============================================================
+    // GROUP 12: Nav Sync
+    // ============================================================
+    suite.group('🔄 Nav Sync — Badge & Points');
+    resetState();
+
+    state.inbox.push({ id: 1, text: 'a', date: '2026-01-01', done: false });
+    state.inbox.push({ id: 2, text: 'b', date: '2026-01-01', done: false });
+    state.inbox.push({ id: 3, text: 'c', date: '2026-01-01', done: true });
+    syncNav();
+    const badge = document.getElementById('inbox-badge');
+    suite.assertEqual('inbox badge แสดงจำนวน active items', badge.textContent, '2');
+    suite.assert('badge แสดงอยู่', badge.style.display !== 'none');
+
+    // ทุก item done → badge ซ่อน
+    state.inbox.forEach(i => i.done = true);
+    syncNav();
+    suite.assert('inbox badge ซ่อนเมื่อ inbox ว่าง', badge.style.display === 'none');
+
+    // nav-points sync
+    state.points = 250;
+    syncNav();
+    suite.assertEqual('nav-points แสดงถูกต้อง', document.getElementById('nav-points').textContent, '250');
+
+    // ============================================================
+    // GROUP 13: loadFromSheets Merge (ป้องกัน data ถูกทับ)
+    // ============================================================
+    suite.group('☁️ Sheets Merge — ป้องกัน local data ถูกทับ');
+    resetState();
+
+    // สถานการณ์: เพิ่ง createTaskFromInbox แล้วข้ามไปหน้า tasks
+    const localTask = { id: 9999, name: 'task ใหม่จาก inbox', priority: 'high', para: 'projects', due: '', done: false, date: today() };
+    state.tasks.push(localTask);
+
+    // Simulate Sheets ส่งข้อมูลเก่ากลับมา (ไม่มี task ใหม่)
+    const oldSheetsData = [
+      { id: 1000, name: 'task เก่า', priority: 'medium', para: 'areas', due: '', done: true, date: '2026-01-01' }
+    ];
+    const sheetsIds = new Set(oldSheetsData.map(t => t.id));
+    const localOnly = state.tasks.filter(t => !sheetsIds.has(t.id));
+    const merged = [...oldSheetsData, ...localOnly];
+    state.tasks = merged;
+
+    suite.assert('merge รักษา task ใหม่ไว้', state.tasks.some(t => t.id === 9999));
+    suite.assert('merge รักษา task เก่าจาก Sheets ด้วย', state.tasks.some(t => t.id === 1000));
+    suite.assert('task ใหม่ยัง done=false', state.tasks.find(t => t.id === 9999).done === false);
+
+    // inbox merge test
+    const localInboxItem = { id: 8888, text: 'inbox item ใหม่', date: today(), done: false };
+    state.inbox = [localInboxItem];
+    const oldInboxSheets = [{ id: 777, text: 'inbox เก่า', date: '2026-01-01', done: true }];
+    const inboxSheetsIds = new Set(oldInboxSheets.map(i => i.id));
+    const inboxLocalOnly = state.inbox.filter(i => !inboxSheetsIds.has(i.id));
+    state.inbox = [...oldInboxSheets, ...inboxLocalOnly];
+    suite.assert('inbox merge รักษา item ใหม่', state.inbox.some(i => i.id === 8888));
+    suite.assert('inbox merge รักษา item เก่าจาก Sheets', state.inbox.some(i => i.id === 777));
+
+    // ============================================================
+    // RENDER RESULTS
+    // ============================================================
+    renderResults(suite);
+  }, 100);
+}
+
+function renderResults(suite) {
+  const totalEl = document.getElementById('sum-total');
+  const passEl = document.getElementById('sum-pass');
+  const failEl = document.getElementById('sum-fail');
+  totalEl.textContent = `${suite.total} tests`;
+  passEl.textContent = `✅ ${suite.passed} ผ่าน`;
+  failEl.textContent = `❌ ${suite.failed} ไม่ผ่าน`;
+
+  const allPass = suite.failed === 0;
+  totalEl.style.background = allPass ? '#d1fae5' : '#ede9fe';
+  totalEl.style.color = allPass ? '#065f46' : '#4c1d95';
+
+  let html = '';
+  suite.groups.forEach(g => {
+    const gPass = g.tests.filter(t => t.pass).length;
+    const gTotal = g.tests.length;
+    const gAllPass = gPass === gTotal;
+    html += `<div class="group">
+      <div class="group-title">
+        ${g.name}
+        <span class="group-badge ${gAllPass ? 'group-all-pass' : 'group-has-fail'}">${gPass}/${gTotal} ผ่าน</span>
+      </div>`;
+    g.tests.forEach(t => {
+      html += `<div class="test-row">
+        <span class="icon">${t.pass ? '✅' : '❌'}</span>
+        <div class="test-name">
+          ${t.name}
+          ${(!t.pass && t.msg) ? `<div class="test-msg">${t.msg}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('results').innerHTML = html;
+
+  // Scroll to first fail
+  const firstFail = document.querySelector('.test-row .icon');
+  const allIcons = document.querySelectorAll('.test-row .icon');
+  for (const icon of allIcons) {
+    if (icon.textContent === '❌') {
+      icon.closest('.group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
+  }
+}
+</script>
+</body>
+</html>

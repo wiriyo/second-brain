@@ -6,6 +6,71 @@
 <title>📂 PARA — Second Brain</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  /* Restore button */
+  .restore-btn {
+    margin-left: auto;
+    color: var(--purple);
+    font-weight: 600;
+    font-size: 12px;
+    border: 1.5px solid var(--purple) !important;
+    border-radius: 8px !important;
+    padding: 3px 10px !important;
+    transition: all 0.15s;
+  }
+  .restore-btn:hover {
+    background: var(--purple) !important;
+    color: white !important;
+  }
+
+  /* Modal form fields */
+  .modal-form {
+    display: flex; flex-direction: column; gap: 12px; margin: 16px 0;
+  }
+  .modal-label {
+    font-size: 13px; font-weight: 600; color: var(--mid); margin-bottom: -6px;
+  }
+  .modal-input, .modal-select {
+    padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 10px;
+    font-size: 14px; font-family: 'Sarabun', sans-serif; outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal-input:focus, .modal-select:focus { border-color: var(--purple); }
+  .modal-actions {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;
+  }
+  .modal-btn {
+    padding: 10px 22px; border-radius: 10px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Sarabun', sans-serif; transition: transform 0.15s;
+  }
+  .modal-btn:hover { transform: translateY(-2px); }
+  .modal-btn-cancel { background: #f3f4f6; color: var(--mid); }
+  .modal-btn-confirm {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+  }
+
+  /* Restore modal special option */
+  .restore-opt-task {
+    background: linear-gradient(135deg, var(--pink), var(--purple)) !important;
+    color: white !important;
+    border: none !important;
+  }
+  .restore-opt-task:hover {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+    border-color: transparent !important;
+  }
+
+  /* Preview text in modal */
+  .restore-preview {
+    font-size: 13px; color: var(--mid);
+    background: #f5f0ff; border-radius: 8px;
+    padding: 8px 12px; margin: -4px 0 16px;
+    border-left: 3px solid var(--purple);
+    word-break: break-word;
+  }
+</style>
 </head>
 <body>
 <nav class="sidebar">
@@ -39,18 +104,8 @@
         <button class="para-add-btn" onclick="addParaItem('projects')">+</button>
       </div>
       <div class="para-desc-box">มีวันเริ่ม มีวันจบ — ถ้าไม่มี deadline ไม่ใช่ Project</div>
-      <div class="para-list" id="list-projects">
-        <div class="para-item">
-          <span class="para-item-dot"></span>
-          <span class="para-item-text">คอร์ส Vibe Coding</span>
-          <span class="para-item-date">เสร็จ: เดือนนี้</span>
-        </div>
-        <div class="para-item">
-          <span class="para-item-dot"></span>
-          <span class="para-item-text">เตรียมสไลด์ Day 1-5</span>
-        </div>
-      </div>
-      <input class="para-input" id="input-projects" placeholder="เพิ่ม Project..." onkeypress="if(event.key==='Enter')addParaItem('projects')" style="display:none"/>
+      <div class="para-list" id="list-projects"></div>
+      <input class="para-input" id="input-projects" placeholder="เพิ่ม Project..." onkeypress="if(event.key==='Enter')saveParaItem('projects')" style="display:none"/>
     </div>
 
     <!-- AREAS -->
@@ -64,13 +119,8 @@
         <button class="para-add-btn" onclick="addParaItem('areas')">+</button>
       </div>
       <div class="para-desc-box">ไม่มีวันจบ แต่ต้องรักษามาตรฐานให้อยู่เสมอ</div>
-      <div class="para-list" id="list-areas">
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">การสอน & ออกแบบหลักสูตร</span></div>
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">IoT / ESP32 Development</span></div>
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Board Games Collection</span></div>
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">สุขภาพ & ออกกำลังกาย</span></div>
-      </div>
-      <input class="para-input" id="input-areas" placeholder="เพิ่ม Area..." onkeypress="if(event.key==='Enter')addParaItem('areas')" style="display:none"/>
+      <div class="para-list" id="list-areas"></div>
+      <input class="para-input" id="input-areas" placeholder="เพิ่ม Area..." onkeypress="if(event.key==='Enter')saveParaItem('areas')" style="display:none"/>
     </div>
 
     <!-- RESOURCES -->
@@ -84,12 +134,8 @@
         <button class="para-add-btn" onclick="addParaItem('resources')">+</button>
       </div>
       <div class="para-desc-box">ข้อมูลที่สนใจ เก็บไว้ใช้ภายหลัง ค้นเจอทันที</div>
-      <div class="para-list" id="list-resources">
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">ESP32-WROOM-32 Docs</span></div>
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Arduino Libraries ที่ดี</span></div>
-        <div class="para-item"><span class="para-item-dot"></span><span class="para-item-text">Zombicide Game Tips</span></div>
-      </div>
-      <input class="para-input" id="input-resources" placeholder="เพิ่ม Resource..." onkeypress="if(event.key==='Enter')addParaItem('resources')" style="display:none"/>
+      <div class="para-list" id="list-resources"></div>
+      <input class="para-input" id="input-resources" placeholder="เพิ่ม Resource..." onkeypress="if(event.key==='Enter')saveParaItem('resources')" style="display:none"/>
     </div>
 
     <!-- ARCHIVE -->
@@ -102,15 +148,53 @@
         </div>
         <button class="para-add-btn" onclick="addParaItem('archive')">+</button>
       </div>
-      <div class="para-desc-box">ย้ายมาที่นี่แทนการลบ เผื่อวันหลังต้องการ</div>
-      <div class="para-list" id="list-archive">
-        <div class="para-item" style="opacity:0.5"><span class="para-item-dot"></span><span class="para-item-text">ย้ายของมาใส่ที่นี่เมื่อเสร็จแล้ว</span></div>
-      </div>
-      <input class="para-input" id="input-archive" placeholder="เพิ่ม Archive..." onkeypress="if(event.key==='Enter')addParaItem('archive')" style="display:none"/>
+      <div class="para-desc-box">กด ↩ Restore เพื่อนำกลับมาทำได้ทุกเมื่อค่ะ</div>
+      <div class="para-list" id="list-archive"></div>
+      <input class="para-input" id="input-archive" placeholder="เพิ่ม Archive..." onkeypress="if(event.key==='Enter')saveParaItem('archive')" style="display:none"/>
     </div>
 
   </div>
 </main>
+
+<!-- ===== MODAL 1: เลือกปลายทาง Restore ===== -->
+<div class="modal" id="restore-modal">
+  <div class="modal-box" style="max-width:400px">
+    <h3 class="modal-title">↩ นำกลับมาทำอะไรดีคะ?</h3>
+    <div class="restore-preview" id="restore-item-name"></div>
+    <div class="modal-options" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <button class="modal-opt" onclick="restoreToSection('projects')">📁 Projects</button>
+      <button class="modal-opt" onclick="restoreToSection('areas')">🌀 Areas</button>
+      <button class="modal-opt" onclick="restoreToSection('resources')">📚 Resources</button>
+      <button class="modal-opt restore-opt-task" onclick="openRestoreAsTask()">✅ สร้าง Task</button>
+    </div>
+    <button class="modal-cancel" onclick="closeRestoreModal()">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- ===== MODAL 2: กรอกรายละเอียด Task ===== -->
+<div class="modal" id="restore-task-modal">
+  <div class="modal-box" style="max-width:460px">
+    <h3 class="modal-title">✅ สร้าง Task จาก Archive</h3>
+    <div class="modal-form">
+      <label class="modal-label">ชื่องาน:</label>
+      <input type="text" class="modal-input" id="restore-task-name" placeholder="ชื่องาน..." />
+
+      <label class="modal-label">Priority:</label>
+      <select class="modal-select" id="restore-task-priority">
+        <option value="high">🔴 High — ด่วนมาก</option>
+        <option value="medium" selected>🟡 Medium — ปานกลาง</option>
+        <option value="low">🟢 Low — ไม่เร่งด่วน</option>
+      </select>
+
+      <label class="modal-label">Due Date (ถ้ามี):</label>
+      <input type="date" class="modal-input" id="restore-task-due" />
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeRestoreTaskModal()">← กลับ</button>
+      <button class="modal-btn modal-btn-confirm" onclick="confirmRestoreAsTask()">✅ สร้าง Task</button>
+    </div>
+  </div>
+</div>
 
 <script src="js/app.js"></script>
 <script src="js/para.js"></script>

@@ -105,7 +105,25 @@
       </div>
       <div class="para-desc-box">มีวันเริ่ม มีวันจบ — ถ้าไม่มี deadline ไม่ใช่ Project</div>
       <div class="para-list" id="list-projects"></div>
-      <input class="para-input" id="input-projects" placeholder="เพิ่ม Project..." onkeypress="if(event.key==='Enter')saveParaItem('projects')" style="display:none"/>
+      <!-- Projects form — มีชื่อ + วันเริ่ม + วันครบ -->
+      <div id="form-projects" class="para-project-form" style="display:none">
+        <input type="text" class="para-input" id="input-projects" placeholder="ชื่อ Project..." />
+        <div class="para-date-row">
+          <div class="para-date-group">
+            <label class="para-date-label">📅 เริ่ม</label>
+            <input type="date" class="para-date-input" id="projects-start" />
+          </div>
+          <span class="para-date-arrow">→</span>
+          <div class="para-date-group">
+            <label class="para-date-label">🏁 ครบ</label>
+            <input type="date" class="para-date-input" id="projects-due" />
+          </div>
+        </div>
+        <div class="para-form-actions">
+          <button class="para-form-cancel" onclick="cancelParaProject()">ยกเลิก</button>
+          <button class="para-form-save" onclick="saveParaProject()">✅ บันทึก</button>
+        </div>
+      </div>
     </div>
 
     <!-- AREAS -->

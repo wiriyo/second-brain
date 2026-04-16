@@ -22,13 +22,21 @@ function renderPara() {
       </div>`;
       return;
     }
-    list.innerHTML = items.map((text, i) => {
+    list.innerHTML = items.map((item, i) => {
+      // รองรับทั้ง format เก่า (string) และใหม่ (object {name, start, due})
+      const isObj = typeof item === 'object' && item !== null;
+      const text = isObj ? item.name : item;
+      const dateStr = isObj && (item.start || item.due)
+        ? `${item.start || '?'} → ${item.due || '?'}`
+        : '';
+
       if (section === 'archive') {
-        // Archive item: มีปุ่ม ↩ Restore เพิ่มเติม
         return `
           <div class="para-item">
             <span class="para-item-dot" style="background:#94a3b8"></span>
-            <span class="para-item-text" style="opacity:0.6">${escapeHtml(text)}</span>
+            <div style="flex:1;min-width:0">
+              <div class="para-item-text" style="opacity:0.6">${escapeHtml(text)}</div>
+            </div>
             <button class="item-btn restore-btn" onclick="openRestoreModal(${i})" title="นำกลับมาทำ">↩ Restore</button>
             <button class="item-btn" onclick="deleteParaItem('${section}', ${i})">✕</button>
           </div>
@@ -37,8 +45,11 @@ function renderPara() {
       return `
         <div class="para-item">
           <span class="para-item-dot"></span>
-          <span class="para-item-text">${escapeHtml(text)}</span>
-          <button class="item-btn" onclick="deleteParaItem('${section}', ${i})" style="margin-left:auto">✕</button>
+          <div style="flex:1;min-width:0">
+            <div class="para-item-text">${escapeHtml(text)}</div>
+            ${dateStr ? `<div class="para-item-date">📅 ${dateStr}</div>` : ''}
+          </div>
+          <button class="item-btn" onclick="deleteParaItem('${section}', ${i})">✕</button>
         </div>
       `;
     }).join('');
@@ -48,11 +59,40 @@ function renderPara() {
 // ===== ADD / SAVE / DELETE =====
 
 function addParaItem(section) {
+  if (section === 'projects') {
+    const form = document.getElementById('form-projects');
+    const isHidden = !form.style.display || form.style.display === 'none';
+    form.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) document.getElementById('input-projects').focus();
+    return;
+  }
   const input = document.getElementById('input-' + section);
   if (!input) return;
   const isHidden = input.style.display === 'none' || input.style.display === '';
   input.style.display = isHidden ? 'block' : 'none';
   if (isHidden) input.focus();
+}
+
+function saveParaProject() {
+  const name = document.getElementById('input-projects').value.trim();
+  if (!name) { document.getElementById('input-projects').focus(); return; }
+  const start = document.getElementById('projects-start').value;
+  const due = document.getElementById('projects-due').value;
+  if (!state.para.projects) state.para.projects = [];
+  state.para.projects.push({ name, start, due });
+  save();
+  document.getElementById('input-projects').value = '';
+  document.getElementById('projects-start').value = '';
+  document.getElementById('projects-due').value = '';
+  document.getElementById('form-projects').style.display = 'none';
+  renderPara();
+}
+
+function cancelParaProject() {
+  document.getElementById('input-projects').value = '';
+  document.getElementById('projects-start').value = '';
+  document.getElementById('projects-due').value = '';
+  document.getElementById('form-projects').style.display = 'none';
 }
 
 function saveParaItem(section) {
@@ -79,7 +119,8 @@ function deleteParaItem(section, index) {
 
 function openRestoreModal(index) {
   _restoreIndex = index;
-  const text = (state.para.archive && state.para.archive[index]) || '';
+  const raw = (state.para.archive && state.para.archive[index]) || '';
+  const text = typeof raw === 'object' ? raw.name : raw;
   document.getElementById('restore-item-name').textContent = `"${text}"`;
   document.getElementById('restore-modal').classList.add('open');
 }
@@ -91,12 +132,14 @@ function closeRestoreModal() {
 
 function restoreToSection(dest) {
   if (_restoreIndex === null || !state.para.archive) return;
-  const text = state.para.archive[_restoreIndex];
-  if (!text) return;
+  const raw = state.para.archive[_restoreIndex];
+  if (!raw) return;
+  const text = typeof raw === 'object' ? raw.name : raw;
 
   state.para.archive.splice(_restoreIndex, 1);
   if (!state.para[dest]) state.para[dest] = [];
-  state.para[dest].push(text);
+  // ถ้าย้ายกลับไป projects ให้เป็น object (ยังไม่มีวันเริ่ม/ครบ รอใส่ทีหลัง)
+  state.para[dest].push(dest === 'projects' ? { name: text, start: '', due: '' } : text);
 
   save();
   closeRestoreModal();
@@ -108,8 +151,10 @@ function restoreToSection(dest) {
 
 function openRestoreAsTask() {
   if (_restoreIndex === null || !state.para.archive) return;
-  const text = state.para.archive[_restoreIndex];
-  document.getElementById('restore-task-name').value = text || '';
+  const raw = state.para.archive[_restoreIndex];
+  const text = typeof raw === 'object' ? raw.name : (raw || '');
+  document.getElementById('restore-task-name').value = text;
+  document.getElementById('restore-task-start').value = (typeof raw === 'object' && raw.start) ? raw.start : '';
   document.getElementById('restore-task-priority').value = 'medium';
   document.getElementById('restore-task-start').value = '';
   document.getElementById('restore-task-due').value = '';

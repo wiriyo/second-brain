@@ -41,7 +41,13 @@
         <option value="areas">🌀 Areas</option>
         <option value="resources">📚 Resources</option>
       </select>
-      <input class="date-input" id="task-due" type="date" />
+      <div class="date-range-group">
+        <label class="date-label">เริ่ม</label>
+        <input class="date-input" id="task-start" type="date" />
+        <span class="date-arrow">→</span>
+        <label class="date-label">ครบ</label>
+        <input class="date-input" id="task-due" type="date" />
+      </div>
       <button class="capture-btn" onclick="addTask()">+ เพิ่ม</button>
     </div>
   </div>

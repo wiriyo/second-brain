@@ -96,7 +96,10 @@ function openTaskFromInboxModal(item) {
               <option value="resources">📚 Resources</option>
             </select>
 
-            <label class="modal-label">Due Date (ถ้ามี):</label>
+            <label class="modal-label">วันเริ่ม (ถ้ามี):</label>
+            <input type="date" class="modal-input" id="task-inbox-start" />
+
+            <label class="modal-label">วันครบกำหนด (ถ้ามี):</label>
             <input type="date" class="modal-input" id="task-inbox-due" />
           </div>
           <div class="modal-actions">
@@ -165,6 +168,7 @@ function openTaskFromInboxModal(item) {
     document.getElementById('task-inbox-name').value = item.text;
     document.getElementById('task-inbox-priority').value = 'medium';
     document.getElementById('task-inbox-para').value = 'projects';
+    document.getElementById('task-inbox-start').value = '';
     document.getElementById('task-inbox-due').value = '';
     // อัปเดต onclick ของปุ่ม Confirm ให้ชี้ไปที่ item ปัจจุบัน (แก้บั๊ค item.id เก่าค้างอยู่)
     const confirmBtn = document.querySelector('#task-from-inbox-modal .modal-btn-confirm');
@@ -191,6 +195,7 @@ function createTaskFromInbox(inboxItemId) {
     name: document.getElementById('task-inbox-name').value.trim() || item.text,
     priority: document.getElementById('task-inbox-priority').value,
     para: document.getElementById('task-inbox-para').value,
+    start: document.getElementById('task-inbox-start').value,
     due: document.getElementById('task-inbox-due').value,
     done: false, // ❌ สำคัญ: task ยังไม่เสร็จ
     date: today()

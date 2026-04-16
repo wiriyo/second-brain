@@ -111,6 +111,7 @@ function openRestoreAsTask() {
   const text = state.para.archive[_restoreIndex];
   document.getElementById('restore-task-name').value = text || '';
   document.getElementById('restore-task-priority').value = 'medium';
+  document.getElementById('restore-task-start').value = '';
   document.getElementById('restore-task-due').value = '';
   document.getElementById('restore-modal').classList.remove('open');
   document.getElementById('restore-task-modal').classList.add('open');
@@ -135,6 +136,7 @@ function confirmRestoreAsTask() {
     name,
     priority: document.getElementById('restore-task-priority').value,
     para: 'projects',
+    start: document.getElementById('restore-task-start').value,
     due: document.getElementById('restore-task-due').value,
     done: false,
     date: today()

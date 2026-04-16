@@ -257,7 +257,21 @@ body {
 .empty-state { text-align: center; padding: 30px; color: var(--light); font-size: 14px; }
 
 /* ===== TASK FORM ===== */
-.task-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.task-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.date-range-group {
+  display: flex; align-items: center; gap: 6px;
+  background: #fafaf8; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 4px 10px;
+  transition: border-color 0.2s;
+}
+.date-range-group:focus-within { border-color: var(--purple); }
+.date-range-group .date-input {
+  border: none; background: transparent; padding: 6px 4px;
+  font-size: 13px; width: 130px;
+}
+.date-range-group .date-input:focus { border: none; outline: none; }
+.date-label { font-size: 11px; color: var(--mid); font-weight: 600; white-space: nowrap; }
+.date-arrow { color: var(--mid); font-size: 13px; }
 .select-input, .date-input {
   padding: 11px 12px; border-radius: var(--radius-sm);
   border: 1.5px solid var(--border); font-family: 'Sarabun', sans-serif;

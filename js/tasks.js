@@ -7,12 +7,15 @@ function addTask() {
     id: Date.now(), name,
     priority: document.getElementById('task-priority').value,
     para: document.getElementById('task-para').value,
+    start: document.getElementById('task-start').value,
     due: document.getElementById('task-due').value,
     done: false, date: today()
   };
   state.tasks.push(task);
   save('tasks');
   document.getElementById('task-name').value = '';
+  document.getElementById('task-start').value = '';
+  document.getElementById('task-due').value = '';
   renderTasks();
 }
 
@@ -65,7 +68,7 @@ function taskHTML(t, done = false) {
       <div style="width:10px;height:10px;border-radius:50%;background:${priorityColor};flex-shrink:0"></div>
       <span class="item-text">${taskName}</span>
       <span class="item-tag">${paraEmoji} ${t.para}</span>
-      ${t.due ? `<span style="font-size:11px;color:var(--mid)">📅 ${t.due}</span>` : ''}
+      ${(t.start || t.due) ? `<span style="font-size:11px;color:var(--mid)">📅 ${t.start ? t.start + ' →' : ''} ${t.due || ''}</span>` : ''}
       ${!done ? `<button class="item-btn" onclick="completeTask(${t.id})">✓</button>` : ''}
       <button class="item-btn" onclick="deleteTask(${t.id})">✕</button>
     </div>

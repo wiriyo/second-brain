@@ -25,8 +25,8 @@ function doGet(e) {
       const items = JSON.parse(decodeURIComponent(e.parameter.items || '[]'));
       const sheet = getOrCreate(ss, 'Tasks');
       sheet.clearContents();
-      sheet.appendRow(['id','name','priority','para','due','done','date']);
-      items.forEach(i => sheet.appendRow([i.id, i.name, i.priority, i.para, i.due||'', i.done, i.date]));
+      sheet.appendRow(['id','name','priority','para','start','due','done','date']);
+      items.forEach(i => sheet.appendRow([i.id, i.name, i.priority, i.para, i.start||'', i.due||'', i.done, i.date]));
       result = { status: 'ok', saved: items.length };
     }
 
@@ -80,7 +80,7 @@ function doGet(e) {
         result = rows.slice(1).map(r => ({
           id: Number(r[0]),  // บังคับ Number เสมอ ป้องกัน type mismatch
           name: r[1], priority: r[2], para: r[3],
-          due: r[4]||'', done: r[5] === true || r[5] === 'true', date: r[6]
+          start: r[4]||'', due: r[5]||'', done: r[6] === true || r[6] === 'true', date: r[7]
         })).filter(r => r.name);
       } else {
         result = [];

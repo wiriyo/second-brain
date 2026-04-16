@@ -141,15 +141,11 @@ function loadFromSheets() {
   showSyncBadge('🔄 กำลังโหลดข้อมูล...');
   jsonpCall({ action: 'getInbox' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // ใช้ String() เปรียบเทียบ ID เพื่อป้องกัน type mismatch (number vs string จาก Sheets)
-      const localIds = new Set(state.inbox.map(i => String(i.id)));
-      const sheetsOnly = data.filter(i => !localIds.has(String(i.id)));
-      if (sheetsOnly.length > 0) {
-        state.inbox = [...state.inbox, ...sheetsOnly];
-        S.set('sb_inbox', state.inbox);
-        syncNav(); updateStats();
-        if (typeof renderInbox === 'function') renderInbox();
-      }
+      // GSheet = source of truth: replace local ทั้งหมด
+      state.inbox = dedupById(data);
+      S.set('sb_inbox', state.inbox);
+      syncNav(); updateStats();
+      if (typeof renderInbox === 'function') renderInbox();
       showSyncBadge('☁️ โหลด Inbox จาก Sheets ✅');
     }
   });
@@ -163,17 +159,11 @@ function loadFromSheets() {
   });
   jsonpCall({ action: 'getTasks' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // migrate format เก่า (text→name, default priority) จาก Sheets ก่อน merge
-      const migrated = _migrateTasks(data);
-      // ใช้ String() เปรียบเทียบ ID เพื่อป้องกัน type mismatch (number vs string จาก Sheets)
-      const localIds = new Set(state.tasks.map(t => String(t.id)));
-      const sheetsOnly = migrated.filter(t => !localIds.has(String(t.id)));
-      if (sheetsOnly.length > 0) {
-        state.tasks = [...state.tasks, ...sheetsOnly];
-        S.set('sb_tasks', state.tasks);
-        updateStats();
-        if (typeof renderTasks === 'function') renderTasks();
-      }
+      // GSheet = source of truth: replace local ทั้งหมด + migrate format เก่า (text→name)
+      state.tasks = dedupById(_migrateTasks(data));
+      S.set('sb_tasks', state.tasks);
+      updateStats();
+      if (typeof renderTasks === 'function') renderTasks();
       showSyncBadge('☁️ โหลด Tasks จาก Sheets ✅');
     }
   });

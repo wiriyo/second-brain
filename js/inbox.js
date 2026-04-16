@@ -46,7 +46,7 @@ function closeModal() {
 }
 
 function moveItem(dest) {
-  const item = state.inbox.find(i => i.id === selectedItemId);
+  const item = state.inbox.find(i => Number(i.id) === Number(selectedItemId));
   if (!item) return;
 
   if (dest === 'projects') {
@@ -166,6 +166,9 @@ function openTaskFromInboxModal(item) {
     document.getElementById('task-inbox-priority').value = 'medium';
     document.getElementById('task-inbox-para').value = 'projects';
     document.getElementById('task-inbox-due').value = '';
+    // อัปเดต onclick ของปุ่ม Confirm ให้ชี้ไปที่ item ปัจจุบัน (แก้บั๊ค item.id เก่าค้างอยู่)
+    const confirmBtn = document.querySelector('#task-from-inbox-modal .modal-btn-confirm');
+    if (confirmBtn) confirmBtn.setAttribute('onclick', `createTaskFromInbox(${item.id})`);
   }
 
   document.getElementById('task-from-inbox-modal').classList.add('open');
@@ -179,7 +182,7 @@ function closeTaskFromInboxModal() {
 }
 
 function createTaskFromInbox(inboxItemId) {
-  const item = state.inbox.find(i => i.id === inboxItemId);
+  const item = state.inbox.find(i => Number(i.id) === Number(inboxItemId));
   if (!item) return;
 
   // สร้าง task ใหม่

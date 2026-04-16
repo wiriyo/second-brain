@@ -22,7 +22,7 @@ function renderTasks() {
     const el = document.getElementById('tasks-' + p);
     const count = document.getElementById('count-' + p);
     if (!el) return;
-    const items = state.tasks.filter(t => t.priority === p && !t.done);
+    const items = state.tasks.filter(t => (t.priority || 'medium') === p && !t.done);
     if (count) count.textContent = items.length;
     if (!items.length) {
       el.innerHTML = '<div class="empty-state" style="padding:14px;font-size:13px">ไม่มีงานค่ะ 🎉</div>';
@@ -56,12 +56,14 @@ function renderTasks() {
 }
 
 function taskHTML(t, done = false) {
-  const priorityColor = t.priority === 'high' ? '#f87171' : t.priority === 'medium' ? '#fbbf24' : '#34d399';
+  const taskName = t.name || t.text || '(ไม่มีชื่อ)';
+  const priority = t.priority || 'medium';
+  const priorityColor = priority === 'high' ? '#f87171' : priority === 'medium' ? '#fbbf24' : '#34d399';
   const paraEmoji = t.para === 'projects' ? '📁' : t.para === 'areas' ? '🌀' : '📚';
   return `
     <div class="item-row ${done ? 'done-item' : ''}">
       <div style="width:10px;height:10px;border-radius:50%;background:${priorityColor};flex-shrink:0"></div>
-      <span class="item-text">${t.name}</span>
+      <span class="item-text">${taskName}</span>
       <span class="item-tag">${paraEmoji} ${t.para}</span>
       ${t.due ? `<span style="font-size:11px;color:var(--mid)">📅 ${t.due}</span>` : ''}
       ${!done ? `<button class="item-btn" onclick="completeTask(${t.id})">✓</button>` : ''}

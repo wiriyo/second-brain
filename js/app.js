@@ -21,7 +21,7 @@ function _migrateFocus(raw) {
 // ===== STATE =====
 const state = {
   inbox: S.get('sb_inbox') || [],
-  tasks: S.get('sb_tasks') || [],
+  tasks: _migrateTasks(S.get('sb_tasks') || []),
   para: S.get('sb_para') || {
     projects: ['คอร์ส Vibe Coding', 'เตรียมสไลด์ Day 1-5'],
     areas: ['การสอน & ออกแบบหลักสูตร', 'IoT / ESP32 Development', 'Board Games Collection', 'สุขภาพ & ออกกำลังกาย'],
@@ -34,6 +34,17 @@ const state = {
   redeemLog: S.get('sb_redeemlog') || [],
   focus: _migrateFocus(S.get('sb_focus')),
 };
+
+// ===== MIGRATE old data format =====
+// แปลง tasks เก่าที่ใช้ field 'text' → 'name' และเติม default priority
+function _migrateTasks(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(t => {
+    if (!t.name && t.text) t.name = t.text;
+    if (!t.priority) t.priority = 'medium';
+    return t;
+  });
+}
 
 // ===== DEDUP helpers — ล้าง duplicate ID ที่เกิดจาก type mismatch =====
 function dedupById(arr) {
@@ -70,15 +81,28 @@ function jsonpCall(params, onSuccess, label) {
   const parts = Object.entries(params).map(([k,v]) => k + '=' + v);
   parts.push('callback=' + id);
   const url = SHEET_URL + '?' + parts.join('&');
+  // ต้อง set window[id] ก่อน append script เสมอ
   window[id] = function(data) {
+    clearTimeout(window[id + '_timeout']);
     delete window[id];
     if (s && s.parentNode) s.parentNode.removeChild(s);
     if (onSuccess) onSuccess(data);
     if (label) showSyncBadge(label);
   };
+  // timeout 10s ป้องกัน callback หลุด
+  window[id + '_timeout'] = setTimeout(() => {
+    if (window[id]) {
+      delete window[id];
+      showSyncBadge('⚠️ Sync timeout — ลองใหม่ทีหลังนะคะ');
+    }
+  }, 10000);
   const s = document.createElement('script');
   s.src = url;
-  s.onerror = () => { delete window[id]; showSyncBadge('⚠️ Sync ไม่สำเร็จ'); };
+  s.onerror = () => {
+    clearTimeout(window[id + '_timeout']);
+    delete window[id];
+    showSyncBadge('⚠️ Sync ไม่สำเร็จ');
+  };
   document.head.appendChild(s);
 }
 
@@ -139,9 +163,11 @@ function loadFromSheets() {
   });
   jsonpCall({ action: 'getTasks' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
+      // migrate format เก่า (text→name, default priority) จาก Sheets ก่อน merge
+      const migrated = _migrateTasks(data);
       // ใช้ String() เปรียบเทียบ ID เพื่อป้องกัน type mismatch (number vs string จาก Sheets)
       const localIds = new Set(state.tasks.map(t => String(t.id)));
-      const sheetsOnly = data.filter(t => !localIds.has(String(t.id)));
+      const sheetsOnly = migrated.filter(t => !localIds.has(String(t.id)));
       if (sheetsOnly.length > 0) {
         state.tasks = [...state.tasks, ...sheetsOnly];
         S.set('sb_tasks', state.tasks);

@@ -141,8 +141,17 @@ function loadFromSheets() {
   showSyncBadge('🔄 กำลังโหลดข้อมูล...');
   jsonpCall({ action: 'getInbox' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // GSheet = source of truth: replace local ทั้งหมด
-      state.inbox = dedupById(data);
+      // Smart merge: อัปเดต done/tag ของ item ที่มีอยู่แล้ว + เพิ่มเฉพาะ item ใหม่จาก Sheets
+      // ไม่ replace ทั้งหมดเพื่อป้องกัน race condition ลบ item ที่ยังไม่ได้ sync
+      const sheetMap = new Map(data.map(i => [String(i.id), i]));
+      const localIds = new Set(state.inbox.map(i => String(i.id)));
+      state.inbox = state.inbox.map(i => {
+        const s = sheetMap.get(String(i.id));
+        return s ? { ...i, done: s.done, tag: s.tag } : i;
+      });
+      const sheetsOnly = data.filter(i => !localIds.has(String(i.id)));
+      if (sheetsOnly.length) state.inbox = [...state.inbox, ...sheetsOnly];
+      state.inbox = dedupById(state.inbox);
       S.set('sb_inbox', state.inbox);
       syncNav(); updateStats();
       if (typeof renderInbox === 'function') renderInbox();
@@ -159,8 +168,18 @@ function loadFromSheets() {
   });
   jsonpCall({ action: 'getTasks' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // GSheet = source of truth: replace local ทั้งหมด + migrate format เก่า (text→name)
-      state.tasks = dedupById(_migrateTasks(data));
+      // Smart merge: อัปเดตเฉพาะ done status จาก Sheets + เพิ่ม task ใหม่จาก Sheets
+      // ไม่ replace ทั้งหมดเพื่อป้องกัน race condition ที่ task ใหม่ที่สร้างแต่ยังไม่ sync จะหาย
+      const migrated = _migrateTasks(data);
+      const sheetMap = new Map(migrated.map(t => [String(t.id), t]));
+      const localIds = new Set(state.tasks.map(t => String(t.id)));
+      state.tasks = state.tasks.map(t => {
+        const s = sheetMap.get(String(t.id));
+        return s ? { ...t, done: s.done } : t;  // อัปเดตเฉพาะ done
+      });
+      const sheetsOnly = migrated.filter(t => !localIds.has(String(t.id)));
+      if (sheetsOnly.length) state.tasks = [...state.tasks, ...sheetsOnly];
+      state.tasks = dedupById(state.tasks);
       S.set('sb_tasks', state.tasks);
       updateStats();
       if (typeof renderTasks === 'function') renderTasks();

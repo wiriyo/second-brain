@@ -321,6 +321,7 @@ body {
 }
 .modal-opt:hover { border-color: var(--purple); background: #f5f0ff; }
 .done-opt { grid-column: span 2; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #86efac; }
+.task-opt { grid-column: span 2; background: linear-gradient(135deg, #fdf4ff, #ede9fe); border-color: var(--purple); color: var(--text); font-weight: 600; }
 .modal-cancel { width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: white; cursor: pointer; color: var(--mid); font-family: 'Sarabun', sans-serif; }
 
 /* ===== HABIT ===== */

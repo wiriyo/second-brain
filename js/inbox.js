@@ -49,21 +49,27 @@ function moveItem(dest) {
   const item = state.inbox.find(i => Number(i.id) === Number(selectedItemId));
   if (!item) return;
 
-  if (dest === 'projects') {
-    // เปิด dialog สร้าง task จาก inbox
+  if (dest === 'task') {
+    // เปิด dialog สร้าง task จาก inbox (ต้องการสร้าง task โดยเฉพาะ)
     openTaskFromInboxModal(item);
     return;
   }
 
-  // สำหรับ areas, resources, archive, done — mark done + เพิ่มลง PARA
+  // mark done + เพิ่มลง PARA หรือแค่ mark done
   item.done = true;
-  item.tag = dest === 'done' ? '✅ จัดแล้ว' :
-             dest === 'areas' ? '🌀 Areas' :
+  item.tag = dest === 'done'      ? '✅ จัดแล้ว' :
+             dest === 'projects'  ? '📁 Projects' :
+             dest === 'areas'     ? '🌀 Areas' :
              dest === 'resources' ? '📚 Resources' : '📦 Archive';
 
   // เพิ่มข้อความเข้า state.para (ยกเว้น 'done')
   if (dest !== 'done' && state.para && state.para[dest] !== undefined) {
-    state.para[dest].push(item.text);
+    // projects เก็บเป็น object {name, start, due}
+    if (dest === 'projects') {
+      state.para.projects.push({ name: item.text, start: '', due: '' });
+    } else {
+      state.para[dest].push(item.text);
+    }
   }
 
   save('inbox'); closeModal(); renderInbox();

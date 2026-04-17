@@ -141,6 +141,14 @@ async function syncPoints() {
   }, null, '💎 Points synced ✅');
 }
 
+function forceSyncAll() {
+  showSyncBadge('☁️ กำลัง Push ข้อมูลทั้งหมดขึ้น Sheets...');
+  syncInbox();
+  syncTasks();
+  syncHabits();
+  setTimeout(() => showSyncBadge('✅ Push สำเร็จ! เปิด Android แล้ว Refresh ได้เลยค่า'), 3000);
+}
+
 // ===== LOAD FROM SHEETS =====
 function loadFromSheets() {
   showSyncBadge('🔄 กำลังโหลดข้อมูล...');

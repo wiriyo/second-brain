@@ -1,0 +1,25 @@
+{
+  "name": "Second Brain ของพี่ทะเล",
+  "short_name": "Second Brain",
+  "description": "ระบบ Personal Productivity — Inbox, Tasks, PARA, Habit Tracker",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#a78bfa",
+  "background_color": "#1a1630",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

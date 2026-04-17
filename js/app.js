@@ -1,3 +1,8 @@
+// ===== PWA SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 // ===== CONFIG =====
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyIF-DXOreA1i-eFJJSKEjhvjvT8tueflebpiun8pmS/exec';
 

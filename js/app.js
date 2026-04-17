@@ -104,10 +104,12 @@ function jsonpCall(params, onSuccess, label) {
   }, 10000);
   const s = document.createElement('script');
   s.src = url;
+  console.log('[JSONP] action:', params.action, '| URL length:', url.length);
   s.onerror = () => {
     clearTimeout(window[id + '_timeout']);
     delete window[id];
-    showSyncBadge('⚠️ Sync ไม่สำเร็จ');
+    console.error('[JSONP] onerror — action:', params.action, '| URL length:', url.length, '| URL:', url.substring(0, 200));
+    showSyncBadge('⚠️ Sync ไม่สำเร็จ (ดู Console F12)');
   };
   document.head.appendChild(s);
 }

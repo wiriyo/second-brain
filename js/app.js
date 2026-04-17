@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ===== CONFIG =====
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyIF-DXOreA1i-eFJJSKEjhvjvT8tueflebpiun8pmS/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwXhdM9ldY9_mcjQze0TUOmVixP_DztyR5_vzo_DpCIPxcXwm1GXXpqm4LaqYHBKT_5SQ/exec';
 
 // ===== STORAGE =====
 const S = {

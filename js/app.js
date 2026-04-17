@@ -184,6 +184,7 @@ function loadFromSheets() {
                     state.points = data.points;
                     S.set('sb_points', data.points);
                     updateStats();
+                    syncNav();
                     if (typeof updatePoints === 'function') updatePoints();
           }
   });

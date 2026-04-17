@@ -81,8 +81,9 @@ function save(syncAction = null) {
 }
 
 // ===== SYNC TO SHEETS =====
+let _jsonpSeq = 0;
 function jsonpCall(params, onSuccess, label) {
-  const id = 'cb_' + Date.now();
+  const id = 'cb_' + Date.now() + '_' + (++_jsonpSeq);
   const parts = Object.entries(params).map(([k,v]) => k + '=' + v);
   parts.push('callback=' + id);
   const url = SHEET_URL + '?' + parts.join('&');
@@ -142,11 +143,23 @@ async function syncPoints() {
 }
 
 function forceSyncAll() {
-  showSyncBadge('☁️ กำลัง Push ข้อมูลทั้งหมดขึ้น Sheets...');
-  syncInbox();
-  syncTasks();
-  syncHabits();
-  setTimeout(() => showSyncBadge('✅ Push สำเร็จ! เปิด Android แล้ว Refresh ได้เลยค่า'), 3000);
+  showSyncBadge('☁️ [1/3] กำลัง Push Inbox...');
+  jsonpCall(
+    { action: 'saveInbox', items: encodeURIComponent(JSON.stringify(state.inbox)) },
+    () => {
+      showSyncBadge('☁️ [2/3] กำลัง Push Tasks...');
+      jsonpCall(
+        { action: 'saveTasks', items: encodeURIComponent(JSON.stringify(state.tasks)) },
+        () => {
+          showSyncBadge('☁️ [3/3] กำลัง Push Habits...');
+          jsonpCall(
+            { action: 'saveHabits', log: encodeURIComponent(JSON.stringify(state.habitLog)), points: state.points },
+            () => showSyncBadge('✅ Push สำเร็จทั้งหมด! เปิด Android แล้ว Refresh ได้เลยค่า')
+          );
+        }
+      );
+    }
+  );
 }
 
 // ===== LOAD FROM SHEETS =====

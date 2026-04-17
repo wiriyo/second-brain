@@ -114,48 +114,48 @@ function jsonpCall(params, onSuccess, label) {
   document.head.appendChild(s);
 }
 
+// ===== POST helper (ไม่มี URL limit, ใช้สำหรับ save) =====
+async function postToSheets(payload) {
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return true;
+  } catch(e) {
+    console.error('[POST] failed:', payload.action, e);
+    return false;
+  }
+}
+
 async function syncInbox() {
-  jsonpCall({
-    action: 'saveInbox',
-    items: encodeURIComponent(JSON.stringify(state.inbox))
-  }, null, '📥 Inbox synced ✅');
+  await postToSheets({ action: 'saveInbox', items: state.inbox });
+  showSyncBadge('📥 Inbox synced ✅');
 }
 
 async function syncTasks() {
-  jsonpCall({
-    action: 'saveTasks',
-    items: encodeURIComponent(JSON.stringify(state.tasks))
-  }, null, '✅ Tasks synced ✅');
+  await postToSheets({ action: 'saveTasks', items: state.tasks });
+  showSyncBadge('✅ Tasks synced ✅');
 }
 
 async function syncHabits() {
-  // ส่ง points ไปพร้อมกับ habits เลย ประหยัด 1 call
-  jsonpCall({
-    action: 'saveHabits',
-    log: encodeURIComponent(JSON.stringify(state.habitLog)),
-    points: state.points
-  }, null, '🎯 Habits synced ✅');
+  await postToSheets({ action: 'saveHabits', log: state.habitLog, points: state.points });
+  showSyncBadge('🎯 Habits synced ✅');
 }
 
 async function syncPoints() {
-  jsonpCall({
-    action: 'savePoints',
-    points: state.points
-  }, null, '💎 Points synced ✅');
+  await postToSheets({ action: 'savePoints', points: state.points });
+  showSyncBadge('💎 Points synced ✅');
 }
 
-function forceSyncAll() {
+async function forceSyncAll() {
   showSyncBadge('☁️ [1/2] กำลัง Push Inbox...');
-  jsonpCall(
-    { action: 'saveInbox', items: encodeURIComponent(JSON.stringify(state.inbox)) },
-    () => {
-      showSyncBadge('☁️ [2/2] กำลัง Push Tasks...');
-      jsonpCall(
-        { action: 'saveTasks', items: encodeURIComponent(JSON.stringify(state.tasks)) },
-        () => showSyncBadge('✅ Push สำเร็จ! เปิด Android แล้ว Refresh ได้เลยค่า')
-      );
-    }
-  );
+  await postToSheets({ action: 'saveInbox', items: state.inbox });
+  showSyncBadge('☁️ [2/2] กำลัง Push Tasks...');
+  await postToSheets({ action: 'saveTasks', items: state.tasks });
+  showSyncBadge('✅ Push สำเร็จ! เปิด Android แล้ว Refresh ได้เลยค่า');
 }
 
 // ===== LOAD FROM SHEETS =====

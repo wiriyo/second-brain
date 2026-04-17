@@ -143,20 +143,14 @@ async function syncPoints() {
 }
 
 function forceSyncAll() {
-  showSyncBadge('☁️ [1/3] กำลัง Push Inbox...');
+  showSyncBadge('☁️ [1/2] กำลัง Push Inbox...');
   jsonpCall(
     { action: 'saveInbox', items: encodeURIComponent(JSON.stringify(state.inbox)) },
     () => {
-      showSyncBadge('☁️ [2/3] กำลัง Push Tasks...');
+      showSyncBadge('☁️ [2/2] กำลัง Push Tasks...');
       jsonpCall(
         { action: 'saveTasks', items: encodeURIComponent(JSON.stringify(state.tasks)) },
-        () => {
-          showSyncBadge('☁️ [3/3] กำลัง Push Habits...');
-          jsonpCall(
-            { action: 'saveHabits', log: encodeURIComponent(JSON.stringify(state.habitLog)), points: state.points },
-            () => showSyncBadge('✅ Push สำเร็จทั้งหมด! เปิด Android แล้ว Refresh ได้เลยค่า')
-          );
-        }
+        () => showSyncBadge('✅ Push สำเร็จ! เปิด Android แล้ว Refresh ได้เลยค่า')
       );
     }
   );

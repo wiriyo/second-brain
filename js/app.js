@@ -154,17 +154,11 @@ function loadFromSheets() {
   showSyncBadge('🔄 กำลังโหลดข้อมูล...');
   jsonpCall({ action: 'getInbox' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // Smart merge: อัปเดต done/tag ของ item ที่มีอยู่แล้ว + เพิ่มเฉพาะ item ใหม่จาก Sheets
-      // ไม่ replace ทั้งหมดเพื่อป้องกัน race condition ลบ item ที่ยังไม่ได้ sync
+      // Sheets-first merge: ใช้ข้อมูลทุก field จาก Sheets เป็นหลัก
+      // item ที่มีอยู่ใน local แต่ไม่มีใน Sheets (ยังไม่ sync) → คงไว้
       const sheetMap = new Map(data.map(i => [String(i.id), i]));
-      const localIds = new Set(state.inbox.map(i => String(i.id)));
-      state.inbox = state.inbox.map(i => {
-        const s = sheetMap.get(String(i.id));
-        return s ? { ...i, done: s.done, tag: s.tag } : i;
-      });
-      const sheetsOnly = data.filter(i => !localIds.has(String(i.id)));
-      if (sheetsOnly.length) state.inbox = [...state.inbox, ...sheetsOnly];
-      state.inbox = dedupById(state.inbox);
+      const localOnly = state.inbox.filter(i => !sheetMap.has(String(i.id)));
+      state.inbox = dedupById([...data, ...localOnly]);
       S.set('sb_inbox', state.inbox);
       syncNav(); updateStats();
       if (typeof renderInbox === 'function') renderInbox();
@@ -181,18 +175,12 @@ function loadFromSheets() {
   });
   jsonpCall({ action: 'getTasks' }, (data) => {
     if (Array.isArray(data) && data.length > 0) {
-      // Smart merge: อัปเดตเฉพาะ done status จาก Sheets + เพิ่ม task ใหม่จาก Sheets
-      // ไม่ replace ทั้งหมดเพื่อป้องกัน race condition ที่ task ใหม่ที่สร้างแต่ยังไม่ sync จะหาย
+      // Sheets-first merge: ใช้ข้อมูลทุก field จาก Sheets เป็นหลัก
+      // task ที่มีอยู่ใน local แต่ไม่มีใน Sheets (ยังไม่ sync) → คงไว้
       const migrated = _migrateTasks(data);
       const sheetMap = new Map(migrated.map(t => [String(t.id), t]));
-      const localIds = new Set(state.tasks.map(t => String(t.id)));
-      state.tasks = state.tasks.map(t => {
-        const s = sheetMap.get(String(t.id));
-        return s ? { ...t, done: s.done } : t;  // อัปเดตเฉพาะ done
-      });
-      const sheetsOnly = migrated.filter(t => !localIds.has(String(t.id)));
-      if (sheetsOnly.length) state.tasks = [...state.tasks, ...sheetsOnly];
-      state.tasks = dedupById(state.tasks);
+      const localOnly = state.tasks.filter(t => !sheetMap.has(String(t.id)));
+      state.tasks = dedupById([...migrated, ...localOnly]);
       S.set('sb_tasks', state.tasks);
       updateStats();
       if (typeof renderTasks === 'function') renderTasks();

@@ -82,7 +82,7 @@ function save(syncAction = null) {
       // Auto-sync ตาม syncAction
   if (syncAction === 'inbox') _debouncedSync('inbox', () => syncInbox());
       if (syncAction === 'tasks') _debouncedSync('tasks', () => syncTasks());
-      if (syncAction === 'habits') _debouncedSync('habits', () => syncHabits());
+      if (syncAction === 'habits') { _debouncedSync('habits', () => syncHabits()); _debouncedSync('points', () => syncPoints()); }
       if (syncAction === 'points') _debouncedSync('points', () => syncPoints());
       if (syncAction === 'focus') _debouncedSync('focus', () => syncFocus());
       // focus เปลี่ยนแต่ไม่ระบุ syncAction ให้ sync focus อัตโนมัติเสมอ

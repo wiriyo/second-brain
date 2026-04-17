@@ -137,7 +137,7 @@ function redeemReward(id, cost, name, emoji) {
   }
   state.points -= cost;
   state.redeemLog.push({ id, name, emoji, cost, date: today() });
-  save();
+  save('points');
   updatePoints();
   renderRewards();
   renderRedeemLog();

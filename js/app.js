@@ -219,6 +219,10 @@ function syncNav() {
   document.querySelectorAll('#inbox-badge').forEach(el => {
     el.textContent = n; el.style.display = n > 0 ? 'inline-block' : 'none';
   });
+  const t = state.tasks.filter(i => !i.done).length;
+  document.querySelectorAll('#tasks-badge').forEach(el => {
+    el.textContent = t; el.style.display = t > 0 ? 'inline-block' : 'none';
+  });
   document.querySelectorAll('#nav-points').forEach(el => el.textContent = state.points);
 }
 

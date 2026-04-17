@@ -170,9 +170,7 @@ function loadFromSheets() {
 
   jsonpCall({ action: 'getInbox' }, (data) => {
           if (Array.isArray(data) && data.length > 0) {
-                    const sheetMap = new Map(data.map(i => [String(i.id), i]));
-                    const localOnly = state.inbox.filter(i => !sheetMap.has(String(i.id)));
-                    state.inbox = dedupById([...data, ...localOnly]);
+                    state.inbox = dedupById(data);
                     S.set('sb_inbox', state.inbox);
                     syncNav();
                     updateStats();
@@ -193,9 +191,7 @@ function loadFromSheets() {
   jsonpCall({ action: 'getTasks' }, (data) => {
           if (Array.isArray(data) && data.length > 0) {
                     const migrated = _migrateTasks(data);
-                    const sheetMap = new Map(migrated.map(t => [String(t.id), t]));
-                    const localOnly = state.tasks.filter(t => !sheetMap.has(String(t.id)));
-                    state.tasks = dedupById([...migrated, ...localOnly]);
+                    state.tasks = dedupById(migrated);
                     S.set('sb_tasks', state.tasks);
                     updateStats();
                     if (typeof renderTasks === 'function') renderTasks();

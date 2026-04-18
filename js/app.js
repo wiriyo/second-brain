@@ -138,30 +138,30 @@ async function postToSheets(payload) {
 async function syncInbox() {
       showSyncBadge('☁️ กำลัง sync Inbox...');
       await postToSheets({ action: 'saveInbox', items: state.inbox });
-      showSyncBadge('📥 Inbox synced ✅');
+      showSyncBadge('📥 Inbox ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
 async function syncTasks() {
       showSyncBadge('☁️ กำลัง sync Tasks...');
       await postToSheets({ action: 'saveTasks', items: state.tasks });
-      showSyncBadge('✅ Tasks synced ✅');
+      showSyncBadge('📋 Tasks ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
 async function syncHabits() {
       showSyncBadge('☁️ กำลัง sync Habits...');
       await postToSheets({ action: 'saveHabits', log: state.habitLog, points: state.points });
-      showSyncBadge('🎯 Habits synced ✅');
+      showSyncBadge('🎯 Habits ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
 async function syncPoints() {
       await postToSheets({ action: 'savePoints', points: state.points });
-      showSyncBadge('💎 Points synced ✅');
+      showSyncBadge('💎 Points ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
 async function syncFocus() {
       showSyncBadge('☁️ กำลัง sync Focus...');
       await postToSheets({ action: 'saveFocus', items: state.focus });
-      showSyncBadge('🎯 Focus synced ✅');
+      showSyncBadge('🎯 Focus ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
 // ===== LOAD FROM SHEETS =====

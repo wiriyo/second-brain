@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Session Start Protocol
+
+**IMPORTANT:** At the start of every session in this folder, call `mempalace_search` with wing `second-brain` to load project context before responding.
+
 ## Overview
 
 This is a static web application called "Second Brain" - a personal productivity system built entirely with HTML, CSS, and JavaScript. It's designed to be deployed on GitHub Pages without requiring a backend server.

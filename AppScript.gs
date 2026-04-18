@@ -111,6 +111,18 @@ function doGet(e) {
       result = { status: 'ok', points: pts };
     }
 
+    if (action === 'saveFocus') {
+      const items = JSON.parse(decodeURIComponent(e.parameter.items || '[]'));
+      const sheet = getOrCreate(ss, 'Focus');
+      sheet.clearContents();
+      sheet.appendRow(['slot','text','refType','refId','done']);
+      items.forEach((item, i) => {
+        if (item && item.text) sheet.appendRow([i, item.text, item.refType||'', item.refId||'', item.done||false]);
+        else sheet.appendRow([i, '', '', '', false]);
+      });
+      result = { status: 'ok' };
+    }
+
     // ===== LOAD ACTIONS =====
     if (action === 'getInbox') {
       const sheet = ss.getSheetByName('Inbox');
@@ -149,6 +161,21 @@ function doGet(e) {
       } else {
         result = { points: 0 };
       }
+    }
+
+    if (action === 'getFocus') {
+      const sheet = ss.getSheetByName('Focus');
+      const items = [null, null, null];
+      if (sheet && sheet.getLastRow() > 1) {
+        const rows = sheet.getDataRange().getValues();
+        rows.slice(1).forEach(r => {
+          const slot = parseInt(r[0]);
+          if (slot >= 0 && slot < 3) {
+            items[slot] = r[1] ? { text: r[1], refType: r[2]||null, refId: r[3]||null, done: r[4] === true || r[4] === 'true' } : null;
+          }
+        });
+      }
+      result = items;
     }
 
   } catch(err) {

@@ -93,7 +93,9 @@ function save(syncAction = null) {
 let _jsonpSeq = 0;
 function jsonpCall(params, onSuccess, label) {
       const id = 'cb_' + Date.now() + '_' + (++_jsonpSeq);
-      const parts = Object.entries(params).map(([k,v]) => k + '=' + v);
+      const parts = Object.entries(params).map(([k, v]) =>
+              k + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : String(v))
+      );
       parts.push('callback=' + id);
       const url = SHEET_URL + '?' + parts.join('&');
       window[id] = function(data) {
@@ -119,49 +121,28 @@ function jsonpCall(params, onSuccess, label) {
       document.head.appendChild(s);
 }
 
-// ===== POST helper =====
-async function postToSheets(payload) {
-      try {
-              await fetch(SHEET_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload)
-              });
-              return true;
-      } catch(e) {
-              console.error('[POST] failed:', payload.action, e);
-              return false;
-      }
-}
-
-async function syncInbox() {
+function syncInbox() {
       showSyncBadge('☁️ กำลัง sync Inbox...');
-      await postToSheets({ action: 'saveInbox', items: state.inbox });
-      showSyncBadge('📥 Inbox synced ✅');
+      jsonpCall({ action: 'saveInbox', items: state.inbox }, null, '📥 Inbox synced ✅');
 }
 
-async function syncTasks() {
+function syncTasks() {
       showSyncBadge('☁️ กำลัง sync Tasks...');
-      await postToSheets({ action: 'saveTasks', items: state.tasks });
-      showSyncBadge('✅ Tasks synced ✅');
+      jsonpCall({ action: 'saveTasks', items: state.tasks }, null, '✅ Tasks synced');
 }
 
-async function syncHabits() {
+function syncHabits() {
       showSyncBadge('☁️ กำลัง sync Habits...');
-      await postToSheets({ action: 'saveHabits', log: state.habitLog, points: state.points });
-      showSyncBadge('🎯 Habits synced ✅');
+      jsonpCall({ action: 'saveHabits', log: state.habitLog, points: state.points }, null, '🎯 Habits synced ✅');
 }
 
-async function syncPoints() {
-      await postToSheets({ action: 'savePoints', points: state.points });
-      showSyncBadge('💎 Points synced ✅');
+function syncPoints() {
+      jsonpCall({ action: 'savePoints', points: state.points }, null, '💎 Points synced ✅');
 }
 
-async function syncFocus() {
+function syncFocus() {
       showSyncBadge('☁️ กำลัง sync Focus...');
-      await postToSheets({ action: 'saveFocus', items: state.focus });
-      showSyncBadge('🎯 Focus synced ✅');
+      jsonpCall({ action: 'saveFocus', items: state.focus }, null, '🎯 Focus synced ✅');
 }
 
 // ===== LOAD FROM SHEETS =====

@@ -1,5 +1,13 @@
 let selectedItemId = null;
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function addInboxItem() {
   const input = document.getElementById('inbox-input');
   const text = input.value.trim();
@@ -21,8 +29,8 @@ function renderInbox() {
   list.innerHTML = items.map(item => `
     <div class="item-row" id="item-${item.id}">
       <span class="inbox-dot"></span>
-      <span class="item-text">${item.text}</span>
-      ${item.tag ? `<span class="item-tag">${item.tag}</span>` : ''}
+      <span class="item-text">${escapeHtml(item.text)}</span>
+      ${item.tag ? `<span class="item-tag">${escapeHtml(item.tag)}</span>` : ''}
       <button class="item-btn" onclick="openMoveModal(${item.id})">จัด →</button>
       <button class="item-btn" onclick="deleteInboxItem(${item.id})">✕</button>
     </div>
@@ -86,7 +94,7 @@ function openTaskFromInboxModal(item) {
           <h3 class="modal-title">📁 สร้าง Task จาก Inbox</h3>
           <div class="modal-form">
             <label class="modal-label">ชื่องาน:</label>
-            <input type="text" class="modal-input" id="task-inbox-name" value="${item.text}" />
+            <input type="text" class="modal-input" id="task-inbox-name" value="${escapeHtml(item.text)}" />
 
             <label class="modal-label">Priority:</label>
             <select class="modal-select" id="task-inbox-priority">

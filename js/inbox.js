@@ -40,6 +40,9 @@ function renderInbox() {
 
 function deleteInboxItem(id) {
   state.inbox = state.inbox.filter(i => i.id !== id);
+  state.focus = state.focus.map(f =>
+    (f && f.refType === 'inbox' && Number(f.refId) === Number(id)) ? null : f
+  );
   save('inbox'); renderInbox(); syncNav();
 }
 

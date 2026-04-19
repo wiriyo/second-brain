@@ -6,6 +6,15 @@ if ('serviceWorker' in navigator) {
 // ===== CONFIG =====
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwXhdM9ldY9_mcjQze0TUOmVixP_DztyR5_vzo_DpCIPxcXwm1GXXpqm4LaqYHBKT_5SQ/exec';
 
+// ===== ESCAPE =====
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ===== STORAGE =====
 const S = {
       get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
@@ -287,7 +296,7 @@ function renderInboxPreview() {
       if (!el) return;
       const recent = state.inbox.filter(i => !i.done).slice(-3).reverse();
       el.innerHTML = recent.map(i => `
-          <div class="inbox-preview-item"><div class="inbox-dot"></div><span>${i.text}</span></div>
+          <div class="inbox-preview-item"><div class="inbox-dot"></div><span>${escapeHtml(i.text)}</span></div>
             `).join('');
 }
 

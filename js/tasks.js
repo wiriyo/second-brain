@@ -89,6 +89,9 @@ function completeTask(id) {
 
 function deleteTask(id) {
   state.tasks = state.tasks.filter(t => Number(t.id) !== Number(id));
+  state.focus = state.focus.map(f =>
+    (f && f.refType === 'task' && Number(f.refId) === Number(id)) ? null : f
+  );
   save('tasks'); renderTasks();
 }
 

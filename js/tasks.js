@@ -1,4 +1,10 @@
 let currentFilter = 'all';
+let _taskSearch = '';
+
+function searchTasks(q) {
+  _taskSearch = q.toLowerCase();
+  renderTasks();
+}
 
 function addTask() {
   const name = document.getElementById('task-name').value.trim();
@@ -25,7 +31,10 @@ function renderTasks() {
     const el = document.getElementById('tasks-' + p);
     const count = document.getElementById('count-' + p);
     if (!el) return;
-    const items = state.tasks.filter(t => (t.priority || 'medium') === p && !t.done);
+    const items = state.tasks.filter(t =>
+      (t.priority || 'medium') === p && !t.done &&
+      (!_taskSearch || (t.name || '').toLowerCase().includes(_taskSearch))
+    );
     if (count) count.textContent = items.length;
     if (!items.length) {
       el.innerHTML = '<div class="empty-state" style="padding:14px;font-size:13px">ไม่มีงานค่ะ 🎉</div>';
@@ -63,12 +72,14 @@ function taskHTML(t, done = false) {
   const priority = t.priority || 'medium';
   const priorityColor = priority === 'high' ? '#f87171' : priority === 'medium' ? '#fbbf24' : '#34d399';
   const paraEmoji = t.para === 'projects' ? '📁' : t.para === 'areas' ? '🌀' : '📚';
+  const isOverdue = !done && t.due && t.due < today();
   return `
-    <div class="item-row ${done ? 'done-item' : ''}">
+    <div class="item-row ${done ? 'done-item' : ''}${isOverdue ? ' overdue-row' : ''}" style="${isOverdue ? 'border-left:3px solid var(--red);' : ''}">
       <div style="width:10px;height:10px;border-radius:50%;background:${priorityColor};flex-shrink:0"></div>
-      <span class="item-text">${taskName}</span>
+      <span class="item-text">${escapeHtml(taskName)}</span>
+      ${isOverdue ? '<span class="overdue-tag">เกินกำหนด!</span>' : ''}
       <span class="item-tag">${paraEmoji} ${t.para}</span>
-      ${(t.start || t.due) ? `<span style="font-size:11px;color:var(--mid)">📅 ${t.start ? t.start + ' →' : ''} ${t.due || ''}</span>` : ''}
+      ${(t.start || t.due) ? `<span style="font-size:11px;color:${isOverdue ? 'var(--red)' : 'var(--mid)'}">📅 ${t.start ? t.start + ' →' : ''} ${t.due || ''}</span>` : ''}
       ${!done ? `<button class="item-btn" onclick="completeTask(${t.id})">✓</button>` : ''}
       <button class="item-btn" onclick="deleteTask(${t.id})">✕</button>
     </div>

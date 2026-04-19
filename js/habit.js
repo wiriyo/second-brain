@@ -1,4 +1,4 @@
-const HABITS = [
+const DEFAULT_HABITS = [
   { id: 'inbox', emoji: '📥', name: 'จด Inbox', pts: 10 },
   { id: 'read', emoji: '📖', name: 'อ่าน 15 นาที', pts: 15 },
   { id: 'focus', emoji: '💻', name: 'โฟกัสงาน 1 ชม.', pts: 20 },
@@ -7,7 +7,7 @@ const HABITS = [
   { id: 'water', emoji: '💧', name: 'ดื่มน้ำ 8 แก้ว', pts: 5 },
 ];
 
-const REWARDS = [
+const DEFAULT_REWARDS = [
   { id: 'tea', emoji: '☕', name: 'ชาเย็น/กาแฟ', cost: 50 },
   { id: 'movie', emoji: '🎬', name: 'ดูหนัง', cost: 100 },
   { id: 'food', emoji: '🍜', name: 'ร้านอาหารโปรด', cost: 150 },
@@ -15,6 +15,60 @@ const REWARDS = [
   { id: 'rest', emoji: '😴', name: 'วันพักผ่อน', cost: 300 },
   { id: 'gift', emoji: '🎀', name: 'ของชิ้นพิเศษ', cost: 500 },
 ];
+
+let HABITS = S.get('sb_custom_habits') || DEFAULT_HABITS;
+let REWARDS = S.get('sb_custom_rewards') || DEFAULT_REWARDS;
+
+function deleteHabit(id) {
+  HABITS = HABITS.filter(h => h.id !== id);
+  S.set('sb_custom_habits', HABITS);
+  renderHabits();
+}
+
+function addHabit() {
+  const emoji = document.getElementById('new-habit-emoji').value.trim() || '⭐';
+  const name = document.getElementById('new-habit-name').value.trim();
+  const pts = parseInt(document.getElementById('new-habit-pts').value) || 10;
+  if (!name) return;
+  HABITS.push({ id: 'c_' + Date.now(), emoji, name, pts });
+  S.set('sb_custom_habits', HABITS);
+  document.getElementById('new-habit-emoji').value = '';
+  document.getElementById('new-habit-name').value = '';
+  document.getElementById('new-habit-pts').value = '10';
+  renderHabits();
+  showToast('✅ เพิ่ม Habit แล้วค่ะ!');
+}
+
+function deleteReward(id) {
+  REWARDS = REWARDS.filter(r => r.id !== id);
+  S.set('sb_custom_rewards', REWARDS);
+  renderRewards();
+}
+
+function addReward() {
+  const emoji = document.getElementById('new-reward-emoji').value.trim() || '🎁';
+  const name = document.getElementById('new-reward-name').value.trim();
+  const cost = parseInt(document.getElementById('new-reward-cost').value) || 100;
+  if (!name) return;
+  REWARDS.push({ id: 'c_' + Date.now(), emoji, name, cost });
+  S.set('sb_custom_rewards', REWARDS);
+  document.getElementById('new-reward-emoji').value = '';
+  document.getElementById('new-reward-name').value = '';
+  document.getElementById('new-reward-cost').value = '100';
+  renderRewards();
+  showToast('✅ เพิ่ม Reward แล้วค่ะ!');
+}
+
+function resetHabitsToDefault() {
+  if (!confirm('🔄 คืนค่า Habits และ Rewards กลับเป็นค่าเริ่มต้นใช่ไหมคะ?')) return;
+  HABITS = [...DEFAULT_HABITS];
+  REWARDS = [...DEFAULT_REWARDS];
+  S.set('sb_custom_habits', HABITS);
+  S.set('sb_custom_rewards', REWARDS);
+  renderHabits();
+  renderRewards();
+  showToast('🔄 คืนค่าเริ่มต้นเรียบร้อยค่ะ!');
+}
 
 function getTodayLog() {
   const t = today();
@@ -47,9 +101,10 @@ function renderHabits() {
   grid.innerHTML = HABITS.map(h => `
     <div class="habit-card ${log[h.id] ? 'checked' : ''}" onclick="toggleHabit('${h.id}', ${h.pts})">
       <span class="habit-emoji">${h.emoji}</span>
-      <div class="habit-name">${h.name}</div>
+      <div class="habit-name">${escapeHtml(h.name)}</div>
       <div class="habit-pts">+${h.pts} แต้ม</div>
       <div class="habit-circle">${log[h.id] ? '✓' : ''}</div>
+      <button class="item-delete-btn" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="ลบ">✕</button>
     </div>
   `).join('');
   updateProgress();
@@ -122,10 +177,12 @@ function renderRewards() {
   const grid = document.getElementById('reward-grid');
   if (!grid) return;
   grid.innerHTML = REWARDS.map(r => `
-    <div class="reward-card ${state.points < r.cost ? 'locked' : ''}" onclick="redeemReward('${r.id}', ${r.cost}, '${r.name}', '${r.emoji}')">
+    <div class="reward-card ${state.points < r.cost ? 'locked' : ''}"
+         onclick="redeemReward('${r.id}', ${r.cost}, '${escapeHtml(r.name)}', '${r.emoji}')">
       <span class="reward-emoji">${r.emoji}</span>
-      <div class="reward-name">${r.name}</div>
+      <div class="reward-name">${escapeHtml(r.name)}</div>
       <div class="reward-cost">${r.cost} แต้ม</div>
+      <button class="item-delete-btn" onclick="event.stopPropagation();deleteReward('${r.id}')" title="ลบ">✕</button>
     </div>
   `).join('');
 }

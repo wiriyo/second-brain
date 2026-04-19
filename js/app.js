@@ -91,9 +91,9 @@ function save(syncAction = null) {
   if (syncAction === 'inbox')  _debouncedSync('inbox', () => syncInbox());
   if (syncAction === 'tasks')  _debouncedSync('tasks', () => syncTasks());
   if (syncAction === 'habits') { _debouncedSync('habits', () => syncHabits()); _debouncedSync('points', () => syncPoints()); }
-  if (syncAction === 'points') _debouncedSync('points', () => syncPoints());
+  if (syncAction === 'points') { _debouncedSync('points', () => syncPoints()); _debouncedSync('redeemlog', () => syncRedeemLog()); }
   if (syncAction === 'focus')  _debouncedSync('focus', () => syncFocus());
-  if (all) _debouncedSync('focus', () => syncFocus(), 2000);
+  if (all) { _debouncedSync('para', () => syncPara(), 2000); _debouncedSync('focus', () => syncFocus(), 2000); }
 }
 
 // ===== SYNC TO SHEETS =====
@@ -171,6 +171,16 @@ async function syncFocus() {
       showSyncBadge('🎯 Focus ส่งแล้ว (ยืนยันไม่ได้)');
 }
 
+async function syncPara() {
+  showSyncBadge('☁️ กำลัง sync PARA...');
+  await postToSheets({ action: 'savePara', data: state.para });
+  showSyncBadge('📂 PARA ส่งแล้ว (ยืนยันไม่ได้)');
+}
+
+async function syncRedeemLog() {
+  await postToSheets({ action: 'saveRedeemLog', items: state.redeemLog });
+}
+
 // ===== LOAD FROM SHEETS =====
 function loadFromSheets() {
       showSyncBadge('🔄 กำลังโหลดข้อมูล...');
@@ -207,6 +217,15 @@ function loadFromSheets() {
           }
   });
 
+  jsonpCall({ action: 'getPara' }, (data) => {
+    if (data && typeof data === 'object' && !Array.isArray(data) && data.projects) {
+      state.para = data;
+      S.set('sb_para', state.para);
+      if (typeof renderPara === 'function') renderPara();
+      showSyncBadge('📂 โหลด PARA จาก Sheets ✅');
+    }
+  });
+
   jsonpCall({ action: 'getFocus' }, (data) => {
           if (Array.isArray(data)) {
                     // ตรวจว่า Sheets มีข้อมูล focus จริง (อย่างน้อย 1 slot ไม่ใช่ null)
@@ -229,6 +248,69 @@ function loadFromSheets() {
                     }
           }
   });
+}
+
+// ===== GREETING =====
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'สวัสดีตอนเช้า';
+  if (h < 17) return 'สวัสดีตอนบ่าย';
+  if (h < 21) return 'สวัสดีตอนเย็น';
+  return 'สวัสดีตอนกลางคืน';
+}
+
+// ===== PRUNE HABIT LOG =====
+function pruneHabitLog(days = 90) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+  let pruned = false;
+  Object.keys(state.habitLog).forEach(k => {
+    if (k < cutoffStr) { delete state.habitLog[k]; pruned = true; }
+  });
+  if (pruned) S.set('sb_habitlog', state.habitLog);
+}
+
+// ===== EXPORT BACKUP =====
+function exportData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    inbox: state.inbox,
+    tasks: state.tasks,
+    para: state.para,
+    points: state.points,
+    habitLog: state.habitLog,
+    redeemLog: state.redeemLog,
+    focus: state.focus,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `second-brain-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 Export สำเร็จแล้วค่ะ!');
+}
+
+// ===== MOBILE NAV =====
+function _initMobileNav() {
+  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+  if (!sidebar) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sidebar-overlay';
+  overlay.id = 'sidebar-overlay';
+  overlay.onclick = () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); };
+  document.body.appendChild(overlay);
+
+  const btn = document.createElement('button');
+  btn.className = 'hamburger';
+  btn.id = 'hamburger';
+  btn.innerHTML = '☰';
+  btn.setAttribute('aria-label', 'เปิดเมนู');
+  btn.onclick = () => { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); };
+  document.body.appendChild(btn);
 }
 
 // ===== TOAST =====
@@ -375,13 +457,25 @@ function updateStats() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
-      const d = document.getElementById('hero-date');
-      if(d) d.textContent = thaiDate();
-      const t = document.getElementById('today-date');
-      if(t) t.textContent = thaiDate();
-      syncNav();
-      updateStats();
-      loadFocus();
-      renderInboxPreview();
-      loadFromSheets();
+  const heroTitle = document.querySelector('.hero-title');
+  if (heroTitle) heroTitle.textContent = `${getGreeting()} พี่ทะเล 👋`;
+  const d = document.getElementById('hero-date');
+  if (d) d.textContent = thaiDate();
+  const t = document.getElementById('today-date');
+  if (t) t.textContent = thaiDate();
+  syncNav();
+  updateStats();
+  loadFocus();
+  renderInboxPreview();
+  pruneHabitLog();
+  _initMobileNav();
+  const footer = document.querySelector('.sidebar-footer');
+  if (footer) {
+    const btn = document.createElement('button');
+    btn.className = 'sync-all-btn';
+    btn.textContent = '📥 Export Backup';
+    btn.onclick = exportData;
+    footer.appendChild(btn);
+  }
+  loadFromSheets();
 });

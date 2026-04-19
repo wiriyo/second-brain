@@ -49,6 +49,24 @@ function doPost(e) {
       result = { status: 'ok' };
     }
 
+    if (action === 'savePara') {
+      const data = body.data || {};
+      const sheet = getOrCreate(ss, 'Para');
+      sheet.clearContents();
+      sheet.appendRow(['key', 'json', 'updated']);
+      sheet.appendRow(['para', JSON.stringify(data), new Date().toISOString()]);
+      result = { status: 'ok' };
+    }
+
+    if (action === 'saveRedeemLog') {
+      const items = body.items || [];
+      const sheet = getOrCreate(ss, 'RedeemLog');
+      sheet.clearContents();
+      sheet.appendRow(['id', 'name', 'emoji', 'cost', 'date']);
+      items.forEach(r => sheet.appendRow([r.id, r.name, r.emoji, r.cost, r.date]));
+      result = { status: 'ok', saved: items.length };
+    }
+
   } catch(err) {
     result = { status: 'error', message: err.toString() };
   }
@@ -138,6 +156,16 @@ function doGet(e) {
         })).filter(r => r.name);
       } else {
         result = [];
+      }
+    }
+
+    if (action === 'getPara') {
+      const sheet = ss.getSheetByName('Para');
+      if (sheet && sheet.getLastRow() > 1) {
+        const json = sheet.getRange(2, 2).getValue();
+        try { result = JSON.parse(json); } catch(e) { result = {}; }
+      } else {
+        result = {};
       }
     }
 

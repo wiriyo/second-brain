@@ -90,6 +90,35 @@
     <div class="reward-grid" id="reward-grid"></div>
   </div>
 
+  <!-- MANAGE HABITS & REWARDS -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title">⚙️ ปรับแต่ง Habits & Rewards</h3>
+      <button class="btn-outline" style="font-size:12px" onclick="resetHabitsToDefault()">🔄 คืนค่าเริ่มต้น</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:8px">➕ เพิ่ม Habit</div>
+        <div class="task-form" style="flex-wrap:wrap;gap:8px">
+          <input class="capture-input" id="new-habit-emoji" placeholder="Emoji" style="width:64px;flex:none" maxlength="4" />
+          <input class="capture-input" id="new-habit-name" placeholder="ชื่อ Habit..." style="flex:1;min-width:120px" />
+          <input class="capture-input" id="new-habit-pts" type="number" placeholder="แต้ม" style="width:72px;flex:none" value="10" min="1" />
+          <button class="capture-btn" onclick="addHabit()">+ เพิ่ม</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:8px">➕ เพิ่ม Reward</div>
+        <div class="task-form" style="flex-wrap:wrap;gap:8px">
+          <input class="capture-input" id="new-reward-emoji" placeholder="Emoji" style="width:64px;flex:none" maxlength="4" />
+          <input class="capture-input" id="new-reward-name" placeholder="ชื่อ Reward..." style="flex:1;min-width:120px" />
+          <input class="capture-input" id="new-reward-cost" type="number" placeholder="แต้ม" style="width:72px;flex:none" value="100" min="1" />
+          <button class="capture-btn" onclick="addReward()">+ เพิ่ม</button>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--light);margin-top:10px">💡 hover บน card แล้วกด ✕ เพื่อลบรายการนั้นออกค่ะ</p>
+  </div>
+
   <!-- REDEEM LOG -->
   <div class="card" id="redeem-log-card" style="display:none">
     <h3 class="card-title">🎉 รางวัลที่แลกไปแล้ว</h3>

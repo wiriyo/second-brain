@@ -1,4 +1,10 @@
 let selectedItemId = null;
+let _inboxSearch = '';
+
+function searchInbox(q) {
+  _inboxSearch = q.toLowerCase();
+  renderInbox();
+}
 
 function addInboxItem() {
   const input = document.getElementById('inbox-input');
@@ -12,7 +18,7 @@ function addInboxItem() {
 function renderInbox() {
   const list = document.getElementById('inbox-list');
   const count = document.getElementById('inbox-count');
-  const items = state.inbox.filter(i => !i.done);
+  const items = state.inbox.filter(i => !i.done && (!_inboxSearch || i.text.toLowerCase().includes(_inboxSearch)));
   count.textContent = items.length;
   if (!items.length) {
     list.innerHTML = '<div class="empty-state">ยังไม่มีรายการค่ะ จดอะไรสักอย่างดิ! 🌸</div>';

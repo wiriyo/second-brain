@@ -1,13 +1,5 @@
 let selectedItemId = null;
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function addInboxItem() {
   const input = document.getElementById('inbox-input');
   const text = input.value.trim();
@@ -240,38 +232,6 @@ function createTaskFromInbox(inboxItemId) {
 function clearDone() {
   state.inbox = state.inbox.filter(i => !i.done);
   save('inbox'); renderInbox();
-}
-
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.className = 'toast';
-    t.id = 'toast';
-    t.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--dark);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: 'Sarabun', sans-serif;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: transform 0.3s ease;
-      z-index: 10000;
-    `;
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  t.style.transform = 'translateX(-50%) translateY(0)';
-  setTimeout(() => {
-    t.style.transform = 'translateX(-50%) translateY(100px)';
-    t.classList.remove('show');
-  }, 2500);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

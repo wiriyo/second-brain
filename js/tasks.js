@@ -107,20 +107,6 @@ function filterTasks(f, btn) {
   renderTasks();
 }
 
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast';
-    t.className = 'toast';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   renderTasks();
   const nameInput = document.getElementById('task-name');

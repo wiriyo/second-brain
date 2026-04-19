@@ -170,20 +170,6 @@ function resetPoints() {
   showToast('🔄 Reset แต้มเรียบร้อยแล้วค่ะ');
 }
 
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast';
-    t.className = 'toast';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   renderHabits();
   updatePoints();

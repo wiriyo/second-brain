@@ -2,14 +2,6 @@
 
 let _restoreIndex = null;
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function renderPara() {
   ['projects', 'areas', 'resources', 'archive'].forEach(section => {
     const list = document.getElementById('list-' + section);

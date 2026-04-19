@@ -78,31 +78,29 @@ function _debouncedSync(action, fn, delay = 1500) {
 
 // ===== SAVE LOCAL + AUTO SYNC =====
 function save(syncAction = null) {
-      state.inbox = dedupById(state.inbox);
-      state.tasks = dedupById(state.tasks);
-      S.set('sb_inbox', state.inbox);
-      S.set('sb_tasks', state.tasks);
-      S.set('sb_para', state.para);
-      S.set('sb_points', state.points);
-      S.set('sb_streak', state.streak);
-      S.set('sb_habitlog', state.habitLog);
-      S.set('sb_redeemlog', state.redeemLog);
-      S.set('sb_focus', state.focus);
-      // Auto-sync ตาม syncAction
-  if (syncAction === 'inbox') _debouncedSync('inbox', () => syncInbox());
-      if (syncAction === 'tasks') _debouncedSync('tasks', () => syncTasks());
-      if (syncAction === 'habits') { _debouncedSync('habits', () => syncHabits()); _debouncedSync('points', () => syncPoints()); }
-      if (syncAction === 'points') _debouncedSync('points', () => syncPoints());
-      if (syncAction === 'focus') _debouncedSync('focus', () => syncFocus());
-      // focus เปลี่ยนแต่ไม่ระบุ syncAction ให้ sync focus อัตโนมัติเสมอ
-  if (!syncAction) _debouncedSync('focus', () => syncFocus(), 2000);
+  const all = !syncAction;
+
+  if (all || syncAction === 'inbox')  { state.inbox = dedupById(state.inbox); S.set('sb_inbox', state.inbox); }
+  if (all || syncAction === 'tasks')  { state.tasks = dedupById(state.tasks); S.set('sb_tasks', state.tasks); }
+  if (all || syncAction === 'habits') { S.set('sb_habitlog', state.habitLog); S.set('sb_streak', state.streak); }
+  if (all || syncAction === 'habits' || syncAction === 'points') { S.set('sb_points', state.points); }
+  if (all || syncAction === 'points') { S.set('sb_redeemlog', state.redeemLog); }
+  if (all || syncAction === 'focus')  { S.set('sb_focus', state.focus); }
+  if (all) S.set('sb_para', state.para);
+
+  if (syncAction === 'inbox')  _debouncedSync('inbox', () => syncInbox());
+  if (syncAction === 'tasks')  _debouncedSync('tasks', () => syncTasks());
+  if (syncAction === 'habits') { _debouncedSync('habits', () => syncHabits()); _debouncedSync('points', () => syncPoints()); }
+  if (syncAction === 'points') _debouncedSync('points', () => syncPoints());
+  if (syncAction === 'focus')  _debouncedSync('focus', () => syncFocus());
+  if (all) _debouncedSync('focus', () => syncFocus(), 2000);
 }
 
 // ===== SYNC TO SHEETS =====
 let _jsonpSeq = 0;
 function jsonpCall(params, onSuccess, label) {
       const id = 'cb_' + Date.now() + '_' + (++_jsonpSeq);
-      const parts = Object.entries(params).map(([k,v]) => k + '=' + v);
+      const parts = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v));
       parts.push('callback=' + id);
       const url = SHEET_URL + '?' + parts.join('&');
       window[id] = function(data) {
@@ -231,6 +229,21 @@ function loadFromSheets() {
                     }
           }
   });
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 // ===== SYNC BADGE =====

@@ -15,6 +15,12 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ===== UNIQUE ID (ป้องกัน Date.now() ซ้ำ) =====
+let _idCounter = 0;
+function genId() {
+      return Date.now() * 1000 + (_idCounter = (_idCounter + 1) % 1000);
+}
+
 // ===== STORAGE =====
 const S = {
       get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
@@ -26,7 +32,8 @@ function _migrateFocus(raw) {
       if (!raw || !Array.isArray(raw)) return [null, null, null];
       return raw.map(item => {
               if (item === null || item === undefined || item === '') return null;
-              if (typeof item === 'string') return { text: item, refType: null, refId: null, done: false };
+              if (typeof item === 'string') return { text: item, refType: null, refId: null, done: false, focusDate: null };
+              if (!item.focusDate) item.focusDate = null;
               return item;
       });
 }
@@ -127,6 +134,22 @@ function jsonpCall(params, onSuccess, label) {
 }
 
 // ===== POST helper =====
+// ===== SYNC TRACKING =====
+let _lastSyncMap = {};
+function _markSynced(action) {
+      _lastSyncMap[action] = Date.now();
+      S.set('sb_lastsync', _lastSyncMap);
+}
+function _getLastSync(action) {
+      const stored = S.get('sb_lastsync') || {};
+      const ts = stored[action] || 0;
+      if (!ts) return 'ยังไม่เคย sync';
+      const diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 60) return 'เมื่อกี้นี้';
+      if (diff < 3600) return Math.floor(diff/60) + ' นาทีที่แล้ว';
+      return new Date(ts).toLocaleTimeString('th-TH');
+}
+
 async function postToSheets(payload) {
       try {
               await fetch(SHEET_URL, {
@@ -135,6 +158,7 @@ async function postToSheets(payload) {
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload)
               });
+              _markSynced(payload.action);
               return true;
       } catch(e) {
               console.error('[POST] failed:', payload.action, e);
@@ -143,42 +167,57 @@ async function postToSheets(payload) {
 }
 
 async function syncInbox() {
-      showSyncBadge('☁️ กำลัง sync Inbox...');
+      showSyncBadge('☁️ กำลัง sync Inbox... (' + _getLastSync('saveInbox') + ')');
       await postToSheets({ action: 'saveInbox', items: state.inbox });
-      showSyncBadge('📥 Inbox ส่งแล้ว (ยืนยันไม่ได้)');
+      showSyncBadge('📥 Inbox sync แล้ว ✨');
 }
 
 async function syncTasks() {
-      showSyncBadge('☁️ กำลัง sync Tasks...');
+      showSyncBadge('☁️ กำลัง sync Tasks... (' + _getLastSync('saveTasks') + ')');
       await postToSheets({ action: 'saveTasks', items: state.tasks });
-      showSyncBadge('📋 Tasks ส่งแล้ว (ยืนยันไม่ได้)');
+      showSyncBadge('📋 Tasks sync แล้ว ✨');
 }
 
 async function syncHabits() {
-      showSyncBadge('☁️ กำลัง sync Habits...');
+      showSyncBadge('☁️ กำลัง sync Habits... (' + _getLastSync('saveHabits') + ')');
       await postToSheets({ action: 'saveHabits', log: state.habitLog, points: state.points });
-      showSyncBadge('🎯 Habits ส่งแล้ว (ยืนยันไม่ได้)');
+      showSyncBadge('🎯 Habits sync แล้ว ✨');
 }
 
 async function syncPoints() {
       await postToSheets({ action: 'savePoints', points: state.points });
-      showSyncBadge('💎 Points ส่งแล้ว (ยืนยันไม่ได้)');
+      showSyncBadge('💎 Points sync แล้ว ✨');
 }
 
 async function syncFocus() {
-      showSyncBadge('☁️ กำลัง sync Focus...');
+      showSyncBadge('☁️ กำลัง sync Focus... (' + _getLastSync('saveFocus') + ')');
       await postToSheets({ action: 'saveFocus', items: state.focus });
-      showSyncBadge('🎯 Focus ส่งแล้ว (ยืนยันไม่ได้)');
+      showSyncBadge('🎯 Focus sync แล้ว ✨');
 }
 
 async function syncPara() {
-  showSyncBadge('☁️ กำลัง sync PARA...');
+  showSyncBadge('☁️ กำลัง sync PARA... (' + _getLastSync('savePara') + ')');
   await postToSheets({ action: 'savePara', data: state.para });
-  showSyncBadge('📂 PARA ส่งแล้ว (ยืนยันไม่ได้)');
+  showSyncBadge('📂 PARA sync แล้ว ✨');
 }
 
 async function syncRedeemLog() {
   await postToSheets({ action: 'saveRedeemLog', items: state.redeemLog });
+}
+
+// ===== SYNC ALL =====
+async function syncAllToSheets() {
+  showSyncBadge('☁️ กำลัง sync ทุกอย่าง...');
+  await Promise.all([
+    syncInbox(),
+    syncTasks(),
+    syncHabits(),
+    syncPoints(),
+    syncFocus(),
+    syncPara(),
+    syncRedeemLog()
+  ]);
+  showSyncBadge('✅ Sync ทุกอย่างเสร็จแล้ว! ✨');
 }
 
 // ===== LOAD FROM SHEETS =====
@@ -378,7 +417,7 @@ function quickCapture() {
       if (!input) return;
       const text = input.value.trim();
       if (!text) return;
-      state.inbox.push({ id: Date.now(), text, date: today(), done: false });
+      state.inbox.push({ id: genId(), text, date: today(), done: false });
       save('inbox');
       input.value = '';
       renderInboxPreview();
@@ -397,38 +436,46 @@ function renderInboxPreview() {
 
 // ===== FOCUS =====
 function setFocusItem(index, text, refType, refId) {
-      state.focus[index] = { text, refType: refType || null, refId: refId || null, done: false };
+      state.focus[index] = { text, refType: refType || null, refId: refId || null, done: false, focusDate: today() };
       save('focus');
       if (typeof renderFocusCards === 'function') renderFocusCards();
 }
 
 function clearFocusItem(index) {
+      // ถ้าเป็น linked item ให้ uncomplete original ด้วย
+      const item = state.focus[index];
+      if (item && item.refType === 'task' && item.refId != null) {
+            const t = state.tasks.find(t => Number(t.id) === Number(item.refId));
+            if (t && t.done) t.done = false;
+      }
       state.focus[index] = null;
       save('focus');
+      save('tasks');
       if (typeof renderFocusCards === 'function') renderFocusCards();
+      if (typeof renderTasks === 'function') renderTasks();
+      updateStats();
+      syncNav();
 }
 
 function completeFocus(index) {
       const item = state.focus[index];
-      if (!item) return;
-      item.done = !item.done;
-      if (item.done) {
-              if (item.refType === 'task' && item.refId != null) {
-                        const t = state.tasks.find(t => Number(t.id) === Number(item.refId));
-                        if (t && !t.done) {
-                                    t.done = true;
-                                    state.points += 10;
-                                    save('tasks');
-                                    syncPoints();
-                                    showSyncBadge('✅ Task เสร็จแล้ว! +10 แต้ม 🎉');
-                        }
+      if (!item || item.done) return;
+      item.done = true;
+      if (item.refType === 'task' && item.refId != null) {
+              const t = state.tasks.find(t => Number(t.id) === Number(item.refId));
+              if (t && !t.done) {
+                    t.done = true;
+                    state.points += 10;
+                    save('tasks');
+                    syncPoints();
+                    showSyncBadge('✅ Task เสร็จแล้ว! +10 แต้ม 🎉');
               }
-              if (item.refType === 'inbox' && item.refId != null) {
-                        const inbox = state.inbox.find(i => Number(i.id) === Number(item.refId));
-                        if (inbox) {
-                                    inbox.done = true;
-                                    save('inbox');
-                        }
+      }
+      if (item.refType === 'inbox' && item.refId != null) {
+              const inbox = state.inbox.find(i => Number(i.id) === Number(item.refId));
+              if (inbox) {
+                    inbox.done = true;
+                    save('inbox');
               }
       }
       save('focus');
@@ -438,6 +485,17 @@ function completeFocus(index) {
 }
 
 function loadFocus() {
+      // Auto-reset focus ที่ไม่ใช่วันนี้
+      const fd = today();
+      let changed = false;
+      state.focus = state.focus.map(f => {
+            if (f && f.focusDate !== fd) {
+                  changed = true;
+                  return null;
+            }
+            return f;
+      });
+      if (changed) save('focus');
       if (typeof renderFocusCards === 'function') renderFocusCards();
 }
 
@@ -455,6 +513,52 @@ function updateStats() {
       e('card-points', state.points + ' แต้ม');
 }
 
+// ===== LAST SYNC LABEL =====
+function _updateLastSyncLabel() {
+  const el = document.getElementById('last-sync-label');
+  if (!el) return;
+  const stored = S.get('sb_lastsync') || {};
+  const newest = Object.values(stored).reduce((max, ts) => Math.max(max, ts), 0);
+  if (!newest) { el.textContent = '☁️ ยังไม่เคย sync'; return; }
+  const diff = Math.floor((Date.now() - newest) / 1000);
+  if (diff < 60) el.textContent = '☁️ sync เมื่อกี้นี้';
+  else if (diff < 3600) el.textContent = '☁️ sync ' + Math.floor(diff/60) + ' นาทีที่แล้ว';
+  else el.textContent = '☁️ sync ' + new Date(newest).toLocaleTimeString('th-TH');
+}
+
+// ===== SYNC ALL EXPORT BUTTON (shared) =====
+function _initSidebarFooter() {
+  const footer = document.querySelector('.sidebar-footer');
+  if (!footer) return;
+  // ตรวจสอบว่ามีปุ่ม sync อยู่แล้วหรือไม่ (จาก index.html)
+  let syncBtn = footer.querySelector('.sync-all-btn');
+  if (!syncBtn) {
+    syncBtn = document.createElement('button');
+    syncBtn.className = 'sync-all-btn';
+    syncBtn.textContent = '☁️ Sync All';
+    syncBtn.onclick = syncAllToSheets;
+    footer.appendChild(syncBtn);
+  }
+  // Export backup
+  let expBtn = footer.querySelector('.export-btn');
+  if (!expBtn) {
+    expBtn = document.createElement('button');
+    expBtn.className = 'sync-all-btn';
+    expBtn.style.marginTop = '4px';
+    expBtn.textContent = '📥 Export Backup';
+    expBtn.onclick = exportData;
+    footer.appendChild(expBtn);
+  }
+  // Last sync label
+  let syncLabel = document.getElementById('last-sync-label');
+  if (!syncLabel) {
+    syncLabel = document.createElement('div');
+    syncLabel.id = 'last-sync-label';
+    syncLabel.style.cssText = 'font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:4px;';
+    footer.appendChild(syncLabel);
+  }
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   const heroTitle = document.querySelector('.hero-title');
@@ -469,13 +573,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInboxPreview();
   pruneHabitLog();
   _initMobileNav();
-  const footer = document.querySelector('.sidebar-footer');
-  if (footer) {
-    const btn = document.createElement('button');
-    btn.className = 'sync-all-btn';
-    btn.textContent = '📥 Export Backup';
-    btn.onclick = exportData;
-    footer.appendChild(btn);
-  }
+  _initSidebarFooter();
+  _updateLastSyncLabel();
+  setInterval(_updateLastSyncLabel, 30000); // update every 30s
   loadFromSheets();
 });

@@ -169,7 +169,7 @@ function confirmRestoreAsTask() {
   }
 
   const task = {
-    id: Date.now(),
+    id: genId(),
     name,
     priority: document.getElementById('restore-task-priority').value,
     para: 'projects',
@@ -191,20 +191,10 @@ function confirmRestoreAsTask() {
   showParaToast(`✅ สร้าง Task "${name}" แล้วค่ะ! ไปดูที่หน้า Tasks นะคะ`);
 }
 
-// ===== TOAST =====
+// ===== TOAST (use shared from app.js) =====
 
 function showParaToast(msg) {
-  let t = document.getElementById('para-toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'para-toast';
-    t.className = 'toast';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+  showToast(msg);
 }
 
 document.addEventListener('DOMContentLoaded', renderPara);

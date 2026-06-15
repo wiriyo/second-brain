@@ -10,7 +10,7 @@ function addTask() {
   const name = document.getElementById('task-name').value.trim();
   if (!name) return;
   const task = {
-    id: Date.now(), name,
+    id: genId(), name,
     priority: document.getElementById('task-priority').value,
     para: document.getElementById('task-para').value,
     start: document.getElementById('task-start').value,
@@ -108,7 +108,11 @@ function deleteTask(id) {
 
 function clearDoneTasks() {
   state.tasks = state.tasks.filter(t => !t.done);
-  save('tasks'); renderTasks();
+  // clean up focus refs to deleted tasks
+  state.focus = state.focus.map(f =>
+    (f && f.refType === 'task' && !state.tasks.some(t => Number(t.id) === Number(f.refId))) ? null : f
+  );
+  save('tasks'); save('focus'); renderTasks();
 }
 
 function filterTasks(f, btn) {

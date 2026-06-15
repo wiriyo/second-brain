@@ -30,6 +30,10 @@
   </div>
   <div class="sidebar-footer">
     <div class="points-mini">💎 <span id="nav-points">0</span> แต้ม</div>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+      <button class="sync-all-btn" onclick="if(typeof syncAllToSheets==='function')syncAllToSheets();else showToast('ไปที่ Inbox/Tasks ก่อนเพื่อ sync')">☁️ Sync All</button>
+      <div class="last-sync" id="last-sync-label" style="font-size:10px;color:rgba(255,255,255,0.35);text-align:center;">—</div>
+    </div>
   </div>
 </nav>
 
@@ -188,6 +192,7 @@
     font-family: 'Sarabun', sans-serif; font-weight: 600;
     transition: all 0.15s; white-space: nowrap;
   }
+  .focus-card.done { display: none; }
   .focus-pick-btn:hover { border-color: var(--purple); color: var(--purple); background: #f5f0ff; }
   .focus-clear-btn {
     flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
@@ -293,11 +298,18 @@
     document.querySelectorAll('.picker-tab').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === 'tasks');
     });
-    document.getElementById('focus-picker-modal').classList.add('open');
+    const modal = document.getElementById('focus-picker-modal');
+    modal.classList.add('open');
+    // Click outside to close
+    setTimeout(() => { modal._closeHandler = function(e) {
+      if (e.target === modal) closeFocusPicker();
+    }; modal.addEventListener('click', modal._closeHandler); }, 0);
   }
 
   function closeFocusPicker() {
-    document.getElementById('focus-picker-modal').classList.remove('open');
+    const modal = document.getElementById('focus-picker-modal');
+    modal.classList.remove('open');
+    if (modal._closeHandler) { modal.removeEventListener('click', modal._closeHandler); delete modal._closeHandler; }
     _pickerIndex = null;
   }
 
@@ -313,9 +325,14 @@
     const el = document.getElementById('picker-list');
     if (!el) return;
 
+    // รายการ ID ที่อยู่ใน focus แล้ว (ป้องกันเลือกซ้ำ)
+    const usedIds = state.focus
+      .filter((f, fi) => f && f.refId != null && fi !== _pickerIndex)
+      .map(f => String(f.refId));
+
     if (_pickerTab === 'tasks') {
-      // กรอง task ที่มี name จริงเท่านั้น ป้องกัน undefined โผล่
-      const tasks = state.tasks.filter(t => !t.done && t.name);
+      // กรอง task ที่มี name จริง + ยังไม่โดนใช้ใน focus slot อื่น
+      const tasks = state.tasks.filter(t => !t.done && t.name && !usedIds.includes(String(t.id)));
       if (!tasks.length) {
         el.innerHTML = '<div class="picker-empty">ไม่มีงานค้างค่ะ 🎉</div>'; return;
       }
@@ -334,7 +351,7 @@
         </div>`;
       }).join('');
     } else {
-      const items = state.inbox.filter(i => !i.done && i.text);
+      const items = state.inbox.filter(i => !i.done && i.text && !usedIds.includes(String(i.id)));
       if (!items.length) {
         el.innerHTML = '<div class="picker-empty">Inbox ว่างแล้วค่ะ 🌸</div>'; return;
       }

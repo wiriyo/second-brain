@@ -30,7 +30,7 @@ function addHabit() {
   const name = document.getElementById('new-habit-name').value.trim();
   const pts = parseInt(document.getElementById('new-habit-pts').value) || 10;
   if (!name) return;
-  HABITS.push({ id: 'c_' + Date.now(), emoji, name, pts });
+  HABITS.push({ id: 'c_' + genId(), emoji, name, pts });
   S.set('sb_custom_habits', HABITS);
   document.getElementById('new-habit-emoji').value = '';
   document.getElementById('new-habit-name').value = '';
@@ -50,7 +50,7 @@ function addReward() {
   const name = document.getElementById('new-reward-name').value.trim();
   const cost = parseInt(document.getElementById('new-reward-cost').value) || 100;
   if (!name) return;
-  REWARDS.push({ id: 'c_' + Date.now(), emoji, name, cost });
+  REWARDS.push({ id: 'c_' + genId(), emoji, name, cost });
   S.set('sb_custom_rewards', REWARDS);
   document.getElementById('new-reward-emoji').value = '';
   document.getElementById('new-reward-name').value = '';

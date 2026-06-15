@@ -10,7 +10,7 @@ function addInboxItem() {
   const input = document.getElementById('inbox-input');
   const text = input.value.trim();
   if (!text) return;
-  state.inbox.push({ id: Date.now(), text, date: today(), done: false, tag: null });
+  state.inbox.push({ id: genId(), text, date: today(), done: false, tag: null });
   save('inbox'); input.value = '';
   renderInbox(); syncNav();
 }
@@ -46,11 +46,21 @@ function deleteInboxItem(id) {
 
 function openMoveModal(id) {
   selectedItemId = id;
-  document.getElementById('move-modal').classList.add('open');
+  const modal = document.getElementById('move-modal');
+  modal.classList.add('open');
+  // click outside to close
+  setTimeout(() => {
+    modal._closeHandler = function(e) {
+      if (e.target === modal) closeModal();
+    };
+    modal.addEventListener('click', modal._closeHandler);
+  }, 0);
 }
 
 function closeModal() {
-  document.getElementById('move-modal').classList.remove('open');
+  const modal = document.getElementById('move-modal');
+  modal.classList.remove('open');
+  if (modal._closeHandler) { modal.removeEventListener('click', modal._closeHandler); delete modal._closeHandler; }
   selectedItemId = null;
 }
 
@@ -190,13 +200,24 @@ function openTaskFromInboxModal(item) {
     if (confirmBtn) confirmBtn.setAttribute('onclick', `createTaskFromInbox(${item.id})`);
   }
 
-  document.getElementById('task-from-inbox-modal').classList.add('open');
+  const taskModalEl = document.getElementById('task-from-inbox-modal');
+  taskModalEl.classList.add('open');
   document.getElementById('move-modal').classList.remove('open');
+  // click outside to close
+  setTimeout(() => {
+    taskModalEl._closeHandler = function(e) {
+      if (e.target === taskModalEl) closeTaskFromInboxModal();
+    };
+    taskModalEl.addEventListener('click', taskModalEl._closeHandler);
+  }, 0);
 }
 
 function closeTaskFromInboxModal() {
   const modal = document.getElementById('task-from-inbox-modal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+    if (modal._closeHandler) { modal.removeEventListener('click', modal._closeHandler); delete modal._closeHandler; }
+  }
   closeModal();
 }
 
@@ -206,7 +227,7 @@ function createTaskFromInbox(inboxItemId) {
 
   // สร้าง task ใหม่
   const task = {
-    id: Date.now(),
+    id: genId(),
     name: document.getElementById('task-inbox-name').value.trim() || item.text,
     priority: document.getElementById('task-inbox-priority').value,
     para: document.getElementById('task-inbox-para').value,
